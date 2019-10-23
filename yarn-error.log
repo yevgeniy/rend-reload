@@ -1,0 +1,68 @@
+Arguments: 
+  C:\Program Files (x86)\nodejs\node.exe C:\Users\DESK\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js install
+
+PATH: 
+  C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\AMD APP\bin\x86_64;C:\Program Files (x86)\AMD APP\bin\x86;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\ATI Technologies\ATI.ACE\Core-Static;C:\Users\DESK\Documents\downloads\phantomjs-1.9.7-windows\phantomjs-1.9.7-windows;C:\Program Files\TortoiseHg\;C:\Program Files (x86)\Skype\Phone\;C:\Program Files\TortoiseGit\bin;C:\WINDOWS\system32\config\systemprofile\.dnx\bin;C:\Program Files\Microsoft DNX\Dnvm\;C:\Program Files\Microsoft VS Code\bin;C:\Users\DESK\AppData\Local\Programs\Python\Python37-32\;C:\projects\platform-tools_r28.0.0-windows\platform-tools\;;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\nodejs\;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files (x86)\AOMEI Backupper;C:\Program Files (x86)\AMD\ATI.ACE\Core-Static;C:\RailsInstaller\Git\cmd;C:\RailsInstaller\Ruby1.9.3\bin;C:\Users\DESK\AppData\Local\Microsoft\WindowsApps;C:\Users\DESK\AppData\Roaming\npm;C:\Users\DESK\AppData\Local\Programs\Fiddler;%USERPROFILE%\AppData\Local\Microsoft\WindowsApps;
+
+Yarn version: 
+  1.17.3
+
+Node version: 
+  10.9.0
+
+Platform: 
+  win32 x64
+
+Trace: 
+  SyntaxError: C:\projects\rend-reload\package.json: Unexpected token } in JSON at position 552
+      at JSON.parse (<anonymous>)
+      at C:\Users\DESK\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (C:\Users\DESK\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:304:30)
+      at C:\Users\DESK\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:315:13
+
+npm manifest: 
+  {
+    "name": "new",
+    "version": "1.0.0",
+    "description": "",
+    "keywords": [],
+    "main": "src/index.js",
+    "dependencies": {
+      "@material-ui/core": "4.4.0",
+      "@material-ui/icons": "4.2.1",
+      "express": "^4.17.1",
+      "mongodb": "^3.3.2",
+      "nimm-react": "^1.0.21",
+      "nimm-sync": "^1.0.4",
+      "nimm-warden": "^1.0.1",
+      "react": "16.8.6",
+      "react-dom": "16.8.6",
+      "react-scripts": "3.0.1",
+      "selenium-webdriver": "^4.0.0-alpha.4",
+      "socket.io": "^2.2.0",
+      "socket.io-client": "^2.2.0",
+      "react-router-dom": "^5.0.0",
+    },
+    "devDependencies": {
+      "typescript": "3.3.3"
+    },
+    "scripts": {
+      "start": "react-scripts start",
+      "build": "react-scripts build",
+      "test": "react-scripts test --env=jsdom",
+      "eject": "react-scripts eject"
+    },
+    "browserslist": [
+      ">0.2%",
+      "not dead",
+      "not ie <= 11",
+      "not op_mini all"
+    ]
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

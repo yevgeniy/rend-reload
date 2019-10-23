@@ -1,0 +1,6 @@
+const {useServer}=require('./hooks');
+
+
+module.exports=function({app}){
+    const {server,io} = useServer(app);
+}
