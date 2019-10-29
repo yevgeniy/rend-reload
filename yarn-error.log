@@ -14,12 +14,17 @@ Platform:
   win32 x64
 
 Trace: 
-  SyntaxError: C:\projects\rend-reload\package.json: Unexpected token } in JSON at position 552
-      at JSON.parse (<anonymous>)
-      at C:\Users\DESK\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:1625:59
-      at Generator.next (<anonymous>)
-      at step (C:\Users\DESK\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:304:30)
-      at C:\Users\DESK\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:315:13
+  Error: https://registry.yarnpkg.com/@material-ui/icons/-/icons-4.2.1.tgz: ESOCKETTIMEDOUT
+      at ClientRequest.<anonymous> (C:\Users\DESK\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:141091:19)
+      at Object.onceWrapper (events.js:273:13)
+      at ClientRequest.emit (events.js:182:13)
+      at TLSSocket.emitRequestTimeout (_http_client.js:661:40)
+      at Object.onceWrapper (events.js:273:13)
+      at TLSSocket.emit (events.js:182:13)
+      at TLSSocket.Socket._onTimeout (net.js:448:8)
+      at ontimeout (timers.js:424:11)
+      at tryOnTimeout (timers.js:288:5)
+      at listOnTimeout (timers.js:251:5)
 
 npm manifest: 
   {
@@ -31,18 +36,18 @@ npm manifest:
     "dependencies": {
       "@material-ui/core": "4.4.0",
       "@material-ui/icons": "4.2.1",
+      "clsx": "^1.0.4",
       "express": "^4.17.1",
       "mongodb": "^3.3.2",
       "nimm-react": "^1.0.21",
-      "nimm-sync": "^1.0.4",
       "nimm-warden": "^1.0.1",
       "react": "16.8.6",
       "react-dom": "16.8.6",
+      "react-router-dom": "^5.0.0",
       "react-scripts": "3.0.1",
       "selenium-webdriver": "^4.0.0-alpha.4",
       "socket.io": "^2.2.0",
-      "socket.io-client": "^2.2.0",
-      "react-router-dom": "^5.0.0",
+      "socket.io-client": "^2.2.0"
     },
     "devDependencies": {
       "typescript": "3.3.3"

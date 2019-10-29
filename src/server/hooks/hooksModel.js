@@ -1,8 +1,7 @@
 const{useCallback, useState,useEffect}=require('nimm-react')
 
-var IO=require('socket.io')();
-IO.listen(3001);
-var {onupdate, io:sync, register} = require('nimm-sync');
+const io= require("socket.io")();
+io.listen(3001);
 
 const Model={
     globalStatus:'started',
@@ -17,87 +16,40 @@ const Model={
     currentUserName:null,
     deleteRequests:[]
 }
-register(IO, Model);
 
-function useModel(extractor) {
-    const[val,setVal]=useState(extractor(Model));
-
-    useEffect(()=>{
-        const d= onupdate(changes=> {
-            changes=changes || [];
-            const newval = extractor(Model);
-            if (newval && changes.some(v=>v===newval)) {
-                if (newval.constructor===Array)
-                    setVal([...newval])
-                else if (newval.constructor===Object)
-                    setVal({...newval})
-            } else
-                setVal(newval);
-        });
-        return ()=>d.destroy();
-    });
+function useModel() {
+    const[val,setVal]=useState();
 
     const syncModel=useCallback((fn)=> {
-        fn(sync);
-        const newval = extractor(Model);
-        if (newval) {
-            if (newval.constructor===Array)
-                setVal([...newval])
-            else if (newval.constructor===Object)
-                setVal({...newval})
-            else 
-                setVal(newval);
-        } else
-            setVal(newval);
+        
     },[])
 
     return [val, syncModel]
 }
 function useModelUsers() {
-    const[users, syncModel]=useModel(model=>model.users);
+    const[users, syncModel]=useModel();
 
     const syncUsers=useCallback( u=> {
-        var addusers = u.nimmunique(users, 'username');
-        var removeusers = users.nimmunique(u,'username');
-        syncModel(sync=> {
-            sync(Model.users).push(...addusers);
-            sync(Model.users).removeAll(...removeusers);
-            sync(Model.users).sort((a,b)=>a.username.toLowerCase()<=b.username.toLowerCase());   
-        })
+        
     },[]);
 
     return {users, syncUsers};
 }
 
 function useModelImages() {
-    const [images, syncModel]=useModel(model=>model.images);
+    const [images, syncModel]=useModel();
 
-    const syncImages=useCallback( (imgs, dosort=false)=> {
+    const syncImages=useCallback( ()=> {
 
-        var newimages=imgs.nimmunique(images, 'id')
-        newimages = newimages || [];
-
-        var oldimages=images.nimmunique(imgs, 'id')
-        oldimages = oldimages || [];
-
-        if (dosort)
-            newimages.nimmsort((a,b)=>a.id >= b.id)
-
-        syncModel(sync=> {
-            sync(Model.images).removeAll(...oldimages);
-            sync(Model.images).push(...newimages);
-        })
     },[]);
 
     return {images, syncImages};
 }
 function useModelStates() {
-    const [states, syncModel]=useModel(model=>model.states)
+    const [states, syncModel]=useModel()
 
     const syncStates=useCallback(newstates=> {
-        syncModel(sync=> {
-            sync(Model).alter('states', newstates)
-        });
+        
     },[])
 
     return {states,syncStates};
