@@ -7,7 +7,7 @@ io.listen(3001);
 
 const System = {
   uses: [],
-  images,
+  images: [],
   imageids: [],
   showOptions: null,
   newImages: [],
