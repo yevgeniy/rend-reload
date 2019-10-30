@@ -1,5 +1,14 @@
 const { component, useState, useEffect } = require("nimm-react");
-const { useStream, useUsers, useShowOptions } = require("./hooks");
+const {
+  useNewImages,
+  useShowOptions,
+  useImages,
+  useCurrentState,
+  useCurrentUsername,
+  useMarkedImages,
+  useStateImages,
+  useUserImages
+} = require("./hooks");
 
 if (process.argv.indexOf("--nobrowser") == -1)
   var browser = require("../browser");
@@ -36,59 +45,48 @@ module.exports = function({
   updateNewImages
 }) {
   return [
-    // component(setImagesOnModel)
+    component(setImagesOnModel)
     //component(stripImagesForUsers, {users, setImages, setUsers, model, datetime, updateNewImages, setNewimages})
   ];
 };
 
 function setImagesOnModel() {
-  const [currentUserName] = useModel(model => model.currentUserName);
-  const [currentState] = useModel(model => model.currentState);
-  const [showOptions] = useModel(model => model.showOptions);
+  const { currentUserName } = useCurrentUsername();
+  const { currentState } = useCurrentState();
+  const { showOptions } = useShowOptions();
 
-  if (currentUserName == "__NEW_IMAGES__") syncImages(newimages, false);
+  if (currentUserName == "__NEW_IMAGES__") return component(setImages_new);
   else if (currentUserName == "__MARKED_IMAGES__")
-    return component(setImagesOnModel_marked);
+    return component(setImages_marked);
   else if (currentUserName == null && currentState)
-    return component(setImagesOnModel_state, { currentState });
+    return component(setImages_state, { currentState });
   else if (currentUserName != null)
-    return component(setImagesOnModel_user, { currentUserName, showOptions });
+    return component(setImages_user, { currentUserName, showOptions });
 }
 
-function setImagesOnModel_user({ currentUserName, showOptions }) {
-  const { syncImages } = useModelImages();
-  const { userImages } = useUserImages(currentUserName);
+function setImages_new() {
+  const { newImages } = useNewImages();
+  const { setImages } = useImages();
 
-  useEffect(() => {
-    if (!userImages) return;
-
-    switch (showOptions) {
-      case "only-marked":
-        syncImages(userImages.filter(v => v.marked));
-        break;
-      default:
-        syncImages(userImages);
-    }
-  }, [userImages, showOptions]);
+  setImages(newImages);
 }
-function setImagesOnModel_state({ currentState }) {
-  const { syncImages } = useModelImages();
-  const { stateImages } = useStateImages(currentState);
-
-  useEffect(() => {
-    if (!stateImages) return;
-    syncImages(stateImages);
-  }, [stateImages]);
-}
-function setImagesOnModel_marked() {
-  const { syncImages } = useModelImages();
+function setImages_marked() {
   const { markedImages } = useMarkedImages();
+  const { setImages } = useImages();
 
-  useEffect(() => {
-    if (!markedImages) return;
+  setImages(markedImages || []);
+}
+function setImages_state({ state }) {
+  const { stateImages } = useStateImages(state);
+  const { setImages } = useImages();
 
-    syncImages(markedImages);
-  }, [markedImages]);
+  setImages(stateImages || []);
+}
+function setImages_user({ currentUserName, showOptions }) {
+  const { userImages } = useUserImages(currentUserName);
+  const { setImages } = useImages();
+
+  setImages(userImages || []);
 }
 
 function stripImagesForUsers({

@@ -19,8 +19,25 @@ const useStates = function() {
   return { states, setStates };
 };
 const useShowOptions = function() {
-  const [opts] = useStream("show-options");
-  return { opts };
+  const [showOptions] = useStream("show-options");
+  return { showOptions };
+};
+const useCurrentUsername = function() {
+  const [username] = useStream("current-username");
+  return { currentUsername };
+};
+const useCurrentState = function() {
+  const [currentState] = useStream("current-state");
+  return { currentState };
+};
+const useNewImages = function() {
+  const [newImages] = useStream("new-images");
+  return { newImages };
+};
+const useImages = function() {
+  const [images, { set }] = useStream("images");
+  const setImages = i => set(i);
+  return { images, setImages };
 };
 
 module.exports = {
@@ -29,5 +46,8 @@ module.exports = {
   ...require("./hooksSystem"),
   useUsers,
   useStates,
-  useShowOptions
+  useShowOptions,
+  useCurrentUsername,
+  useCurrentState,
+  useNewImages
 };

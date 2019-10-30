@@ -16,6 +16,10 @@ const System = {
   currentUsername: null
 };
 
+const newImages = createChannel("new-images", {
+  get: () => System.newImages,
+  set: images => (System.newImages = images)
+});
 const images = createChannel("images", {
   get: () => System.images,
   set: images => (System.images = images)
@@ -60,7 +64,8 @@ const definition = nimmsync.create([
   currentUsername,
   currentState,
   imageids,
-  images
+  images,
+  newImages
 ]);
 const { useStream } = nimmsync.connect(definition, nimreact);
 
