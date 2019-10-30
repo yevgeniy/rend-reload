@@ -1,21 +1,9 @@
-import {useState,useEffect} from 'react';
+import React, { useState, useEffect } from "react";
 
-import nimmsync from 'nimm-sync';
+export const useModel = (extractor, _init) => {
+  const [val, setVal] = useState();
 
-const io = require("socket.io-client");
-const client=io.connect('http://localhost:3001');
+  const syncModel = fn => {};
 
-const {useStream}=nimmsync.connectSocketIOClient(client);
-
-
-export const useModel=(extractor, _init)=> {
-    const [val,setVal]=useState();
-
-    
-
-    const syncModel=(fn)=> {
-        
-    }
-
-    return [val, syncModel]
-}
+  return [val, syncModel];
+};

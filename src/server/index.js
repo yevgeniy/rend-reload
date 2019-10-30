@@ -1,8 +1,8 @@
-const {root,component} = require('nimm-react');
-const app = require('./app');
+const { root, component } = require("nimm-react");
+const app = require("./app");
 
 module.exports = function() {
-  require('./helpers');
+  require("./helpers");
 
-  root(component(app))
+  root(component(app));
 };
