@@ -1,5 +1,5 @@
 const { component, useState, useEffect } = require("nimm-react");
-const { useStream, useUsers } = require("./hooks");
+const { useStream, useUsers, useShowOptions } = require("./hooks");
 
 if (process.argv.indexOf("--nobrowser") == -1)
   var browser = require("../browser");
@@ -36,54 +36,10 @@ module.exports = function({
   updateNewImages
 }) {
   return [
-    component(setUsersOnModel)
-    // component(setStatesOnModel),
     // component(setImagesOnModel)
-
     //component(stripImagesForUsers, {users, setImages, setUsers, model, datetime, updateNewImages, setNewimages})
   ];
 };
-
-function setStatesOnModel() {
-  const { states } = useStates();
-  const { syncStates } = useModelStates();
-
-  useEffect(() => {
-    if (!states) return;
-    syncStates(states);
-  }, [states]);
-}
-
-function setUsersOnModel() {
-  const [showOptions] = useStream("show-options");
-
-  switch (showOptions) {
-    case "only-marked":
-      return component(setUsersOnModel_markedOnly);
-    default:
-      return component(setUsersOnModel_all);
-  }
-}
-function setUsersOnModel_all() {
-  const { users: dbUsers } = useUsers();
-  const [users, { set }] = useStream("users");
-
-  useEffect(() => {
-    if (!dbUsers) return;
-
-    set(dbUsers);
-  }, dbUsers);
-}
-function setUsersOnModel_markedOnly() {
-  users = users.filter(user => {
-    var imgs = (images[user.username] || []).filter(v => v.marked);
-    return imgs.length;
-  });
-
-  useEffect(() => {
-    syncUsers(users);
-  }, users);
-}
 
 function setImagesOnModel() {
   const [currentUserName] = useModel(model => model.currentUserName);
