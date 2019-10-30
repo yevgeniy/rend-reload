@@ -18,11 +18,16 @@ const useStates = function() {
 
   return { states, setStates };
 };
+const useShowOptions = function() {
+  const [opts] = useStream("show-options");
+  return { opts };
+};
 
 module.exports = {
   ...require("./hooksDb"),
   ...require("./hooksImages"),
   ...require("./hooksSystem"),
   useUsers,
-  useStates
+  useStates,
+  useShowOptions
 };

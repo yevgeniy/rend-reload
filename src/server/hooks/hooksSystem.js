@@ -6,31 +6,41 @@ const nimreact = require("nimm-react");
 io.listen(3001);
 
 const System = {
-  db: {
-    users: [],
-    images: {}
-  },
+  uses: [],
+  images,
+  imageids: [],
   showOptions: null,
   newImages: [],
   states: [],
   currentState: null,
-  currentUserName: null
+  currentUsername: null
 };
 
+const images = createChannel("images", {
+  get: () => System.images,
+  set: images => (System.images = images)
+});
+const imageids = createChannel("image-ids", {
+  get: () => System.images.map(v => v.id),
+  links: {
+    [images.set]: (out, { key, at, operation, args }) => out()
+  }
+});
+const currentState = createChannel("currernt-state", {
+  get: () => System.currentState,
+  set: state => (System.currentState = state)
+});
+const currentUsername = createChannel("current-username", {
+  get: () => System.currentUsername,
+  set: name => (System.currentUsername = name)
+});
 const users = createChannel("users", {
-  get: () => System.db.users,
-  set: users => (System.db.users = users)
+  get: () => System.users,
+  set: users => (System.users = users)
 });
 const states = createChannel("states", {
   get: () => System.states,
-  set: times => (System.states = times)
-});
-
-const usernames = createChannel("user-names", {
-  get: () => System.db.users.map(v => v.username),
-  links: {
-    [users.set]: (out, { key, at, operation, args }) => out()
-  }
+  set: states => (System.states = states)
 });
 
 const user = createChannel("user", {
@@ -38,16 +48,19 @@ const user = createChannel("user", {
 });
 
 const showOptions = createChannel("show-options", {
-  get: () => System.db.showOptions,
-  set: v => (System.db.showOptions = v)
+  get: () => System.showOptions,
+  set: v => (System.showOptions = v)
 });
 
 const definition = nimmsync.create([
   users,
   showOptions,
-  usernames,
   user,
-  states
+  states,
+  currentUsername,
+  currentState,
+  imageids,
+  images
 ]);
 const { useStream } = nimmsync.connect(definition, nimreact);
 
