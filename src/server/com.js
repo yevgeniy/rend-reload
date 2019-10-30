@@ -51,17 +51,25 @@ module.exports = function({
 };
 
 function setImagesOnModel() {
-  const { currentUserName } = useCurrentUsername();
+  const { currentUsername } = useCurrentUsername();
   const { currentState } = useCurrentState();
   const { showOptions } = useShowOptions();
 
-  if (currentUserName == "__NEW_IMAGES__") return component(setImages_new);
-  else if (currentUserName == "__MARKED_IMAGES__")
+console.log(currentUsername, currentState)
+
+  useEffect(()=> {
+    return ()=> {
+      console.log("UNMOUNTING");
+    }
+  },[])
+
+  if (currentUsername == "__NEW_IMAGES__") return component(setImages_new);
+  else if (currentUsername == "__MARKED_IMAGES__")
     return component(setImages_marked);
-  else if (currentUserName == null && currentState)
+  else if (currentUsername == null && currentState)
     return component(setImages_state, { currentState });
-  else if (currentUserName != null)
-    return component(setImages_user, { currentUserName, showOptions });
+  else if (currentUsername != null)
+    return component(setImages_user, { currentUsername, showOptions });
 }
 
 function setImages_new() {
@@ -74,19 +82,28 @@ function setImages_marked() {
   const { markedImages } = useMarkedImages();
   const { setImages } = useImages();
 
-  setImages(markedImages || []);
+  useEffect(()=> {
+    setImages(markedImages || []);
+  },markedImages)
+  
 }
 function setImages_state({ state }) {
   const { stateImages } = useStateImages(state);
   const { setImages } = useImages();
 
-  setImages(stateImages || []);
+  useEffect(()=> {
+    setImages(stateImages || []);
+  },[state, stateImages])
+  
 }
-function setImages_user({ currentUserName, showOptions }) {
-  const { userImages } = useUserImages(currentUserName);
+function setImages_user({ currentUsername, showOptions }) {
+  const { userImages } = useUserImages(currentUsername);
   const { setImages } = useImages();
 
-  setImages(userImages || []);
+  useEffect(()=> {
+    setImages(userImages || []);
+  },[currentUsername, userImages])
+  
 }
 
 function stripImagesForUsers({

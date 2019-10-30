@@ -2,7 +2,7 @@ import React from 'react';
 import {useState, useEffect} from 'react';
 import clsx from 'clsx';
 import {AppBar,Toolbar,Typography,makeStyles} from '@material-ui/core'
-import {useSelectedState, useSelectedUser, useImages} from './hooks';
+import {useCurrentUsername, useCurrentState, useImages} from './hooks';
 import ImageItem from './ImageItem';
 
 
@@ -21,8 +21,9 @@ const useStyles=makeStyles(theme=> {
 
 const SelectedUserPage=(props)=> {
     const classes=useStyles();
-    const {selectedState, syncSelectedState}=useSelectedState(props);
-    const {selectedUserName, user, syncSelectedUserName}=useSelectedUser(props);
+    const {currentUsername, user, setCurrentUsername}=useCurrentUsername();
+    const {currentState:selectedState, setCurrentState}=useCurrentState();
+    
     const {images} = useImages();
     const {scrollTop, screenHeight} = useScrolling();
     const marking=useM();
@@ -30,10 +31,14 @@ const SelectedUserPage=(props)=> {
     const [selectedImage, setSelectedImage]=useState(null);
     
     useEffect(()=> {
-        syncSelectedState(+props.match.params.state);
+        props.match.params.state
+            && setCurrentState(+props.match.params.state)
+        return ()=>setCurrentState(null);
     },[])
     useEffect(()=> {
-        syncSelectedUserName(props.match.params.username);
+        props.match.params.username
+            && setCurrentUsername(props.match.params.username)
+        return ()=>setCurrentUsername(null);
     },[]);
 
     const renderFrame = ()=> {
@@ -85,7 +90,7 @@ const SelectedUserPage=(props)=> {
 
             <div className={classes.images}>
                 {
-                    images.map((v,i)=>{                                                 
+                    (images||[]).map((v,i)=>{                                                 
 
                         return <ImageItem key={i} i={i}
                             scrollTop={scrollTop}

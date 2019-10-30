@@ -81,7 +81,6 @@ function useUserImages(currentUserName) {
 
 module.exports = {
   useMarkedImages,
-  useStates,
   useStateImages,
   useUserImages
 };

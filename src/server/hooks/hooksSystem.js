@@ -22,7 +22,10 @@ const newImages = createChannel("new-images", {
 });
 const images = createChannel("images", {
   get: () => System.images,
-  set: images => (System.images = images)
+  set: images => {
+    console.log(images && images.length)
+    System.images = images;
+  }
 });
 const imageids = createChannel("image-ids", {
   get: () => System.images.map(v => v.id),
@@ -30,7 +33,7 @@ const imageids = createChannel("image-ids", {
     [images.set]: (out, { key, at, operation, args }) => out()
   }
 });
-const currentState = createChannel("currernt-state", {
+const currentState = createChannel("current-state", {
   get: () => System.currentState,
   set: state => (System.currentState = state)
 });
@@ -48,7 +51,7 @@ const states = createChannel("states", {
 });
 
 const user = createChannel("user", {
-  get: username => System.db.users.find(v => v.username === username)
+  get: username => System.users.find(v => v.username === username)
 });
 
 const showOptions = createChannel("show-options", {

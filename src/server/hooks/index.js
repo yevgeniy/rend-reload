@@ -23,7 +23,7 @@ const useShowOptions = function() {
   return { showOptions };
 };
 const useCurrentUsername = function() {
-  const [username] = useStream("current-username");
+  const [currentUsername] = useStream("current-username");
   return { currentUsername };
 };
 const useCurrentState = function() {
@@ -49,5 +49,6 @@ module.exports = {
   useShowOptions,
   useCurrentUsername,
   useCurrentState,
-  useNewImages
+  useNewImages,
+  useImages
 };

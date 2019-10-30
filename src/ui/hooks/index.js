@@ -13,3 +13,20 @@ export const useUsers = () => {
   const [users] = useStream("users");
   return { users };
 };
+export const useCurrentUsername=()=> {
+  const[currentUsername,{set}]=useStream('current-username')
+  const[user]=useStream('user', currentUsername);
+  const setCurrentUsername=n=>set(n);
+
+  return {currentUsername,user, setCurrentUsername};
+}
+export const useCurrentState=()=> {
+  const[currentState,{set}]=useStream('current-state');
+  const setCurrentState=s=>set(s);
+  return {currentState,setCurrentState}
+}
+export const useImages=()=> {
+  const[images]=useStream('images');
+
+  return {images}
+}
