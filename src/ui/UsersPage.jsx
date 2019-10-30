@@ -20,7 +20,6 @@ const useStyles = makeStyles(theme => ({
 const UsersPage = React.memo(() => {
   const { users } = useUsers();
   const states = useStates() || [];
-  console.log(states);
   const classes = useStyles();
 
   const handleDelete = () => {};
