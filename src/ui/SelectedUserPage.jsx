@@ -2,7 +2,7 @@ import React from 'react';
 import {useState, useEffect} from 'react';
 import clsx from 'clsx';
 import {AppBar,Toolbar,Typography,makeStyles} from '@material-ui/core'
-import {useCurrentUsername, useCurrentState, useImages} from './hooks';
+import {useCurrentUsername, useCurrentState, useImageIds} from './hooks';
 import ImageItem from './ImageItem';
 
 
@@ -24,7 +24,7 @@ const SelectedUserPage=(props)=> {
     const {currentUsername, user, setCurrentUsername}=useCurrentUsername();
     const {currentState:selectedState, setCurrentState}=useCurrentState();
     
-    const {images} = useImages();
+    const {imageids} = useImageIds();
     const {scrollTop, screenHeight} = useScrolling();
     const marking=useM();
 
@@ -90,14 +90,14 @@ const SelectedUserPage=(props)=> {
 
             <div className={classes.images}>
                 {
-                    (images||[]).map((v,i)=>{                                                 
+                    (imageids||[]).map((v,i)=>{                                                 
 
                         return <ImageItem key={i} i={i}
                             scrollTop={scrollTop}
                             screenHeight={screenHeight} 
                             setSelectedImage={setSelectedImage}
                             marking={marking}
-                            {...v}
+                            id={v}
                             />        
                     })
                 }

@@ -87,13 +87,13 @@ function setImages_marked() {
   },markedImages)
   
 }
-function setImages_state({ state }) {
-  const { stateImages } = useStateImages(state);
+function setImages_state({ currentState }) {
+  const { stateImages } = useStateImages(currentState);
   const { setImages } = useImages();
 
   useEffect(()=> {
     setImages(stateImages || []);
-  },[state, stateImages])
+  },[currentState, stateImages])
   
 }
 function setImages_user({ currentUsername, showOptions }) {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useModel } from "./";
+import { useModel, useStream } from "./";
 
 export function useImages() {
   const [images, syncModel] = useModel(model => model.images);
@@ -23,21 +23,10 @@ export function useImages() {
   // }
   return { images };
 }
-export function useImage(_img) {
-  const [image, syncModel] = useModel(
-    model => model.images.find(v => v && _img && v.id === _img.id),
-    _img
-  );
-
-  const updateImage = useCallback(
-    update => {
-      if (!image) return;
-      syncModel(sync => {
-        for (let i in update) sync(image).alter(i, update[i]);
-      });
-    },
-    [_img && _img.id]
-  );
-
+export function useImage(id) {
+  const[image, {update}]=useStream('image', id);
+  const updateImage = u=> update(u);
+  
+  
   return { image, updateImage };
 }

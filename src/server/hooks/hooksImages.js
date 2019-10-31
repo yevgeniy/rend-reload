@@ -47,13 +47,16 @@ function useStateImages(currentState) {
       }
       setStateImages(imgs);
     });
+    return ()=> {
+      setStateImages=()=>{} /*bork stale updates*/
+    }
   }, [db, currentState]);
 
   return { stateImages };
 }
 function useUserImages(currentUserName) {
   const db = useMongoDb();
-  const [userImages, setUserImages] = useState(null);
+  let [userImages, setUserImages] = useState(null);
 
   useEffect(() => {
     if (!db) return;
@@ -74,6 +77,9 @@ function useUserImages(currentUserName) {
       }
       setUserImages(res);
     });
+    return ()=> {
+      setUserImages=()=>{} /*bork stale updates*/
+    }
   }, [db, currentUserName]);
 
   return { userImages };

@@ -30,3 +30,7 @@ export const useImages=()=> {
 
   return {images}
 }
+export const useImageIds=()=> {
+  const[imageids]=useStream('image-ids');
+  return {imageids}
+}

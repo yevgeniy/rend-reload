@@ -33,6 +33,9 @@ const imageids = createChannel("image-ids", {
     [images.set]: (out, { key, at, operation, args }) => out()
   }
 });
+const image=createChannel('image', {
+  get:at=>System.images.find(v=>v.id===at)
+});
 const currentState = createChannel("current-state", {
   get: () => System.currentState,
   set: state => (System.currentState = state)
@@ -68,6 +71,7 @@ const definition = nimmsync.create([
   currentState,
   imageids,
   images,
+  image,
   newImages
 ]);
 const { useStream } = nimmsync.connect(definition, nimreact);
