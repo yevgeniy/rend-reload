@@ -47,9 +47,9 @@ function useStateImages(currentState) {
       }
       setStateImages(imgs);
     });
-    return ()=> {
-      setStateImages=()=>{} /*bork stale updates*/
-    }
+    return () => {
+      setStateImages = () => {}; /*bork stale updates*/
+    };
   }, [db, currentState]);
 
   return { stateImages };
@@ -77,16 +77,33 @@ function useUserImages(currentUserName) {
       }
       setUserImages(res);
     });
-    return ()=> {
-      setUserImages=()=>{} /*bork stale updates*/
-    }
+    return () => {
+      setUserImages = () => {}; /*bork stale updates*/
+    };
   }, [db, currentUserName]);
 
   return { userImages };
+}
+function useImageIds(username) {
+  const db = useMongoDb();
+  const [ids, setIds] = useState(null);
+
+  useEffect(() => {
+    if (!db) return;
+
+    db.collection("images").distinct(
+      "id",
+      { username: user.username },
+      (err, ids) => setIds(ids)
+    );
+  }, [db]);
+
+  return ids;
 }
 
 module.exports = {
   useMarkedImages,
   useStateImages,
-  useUserImages
+  useUserImages,
+  useImageIds
 };

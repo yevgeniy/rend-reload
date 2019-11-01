@@ -22,10 +22,7 @@ const newImages = createChannel("new-images", {
 });
 const images = createChannel("images", {
   get: () => System.images,
-  set: images => {
-    console.log(images && images.length)
-    System.images = images;
-  }
+  set: images => (System.images = images)
 });
 const imageids = createChannel("image-ids", {
   get: () => System.images.map(v => v.id),
@@ -33,8 +30,8 @@ const imageids = createChannel("image-ids", {
     [images.set]: (out, { key, at, operation, args }) => out()
   }
 });
-const image=createChannel('image', {
-  get:at=>System.images.find(v=>v.id===at)
+const image = createChannel("image", {
+  get: at => System.images.find(v => v.id === at)
 });
 const currentState = createChannel("current-state", {
   get: () => System.currentState,
@@ -46,7 +43,17 @@ const currentUsername = createChannel("current-username", {
 });
 const users = createChannel("users", {
   get: () => System.users,
-  set: users => (System.users = users)
+  set: users => (System.users = users),
+  updateMember: (username, u) => {
+    System.users = System.users.map(user => {
+      return user.username === username
+        ? {
+            ...user,
+            ...u
+          }
+        : user;
+    });
+  }
 });
 const states = createChannel("states", {
   get: () => System.states,
@@ -74,10 +81,21 @@ const definition = nimmsync.create([
   image,
   newImages
 ]);
-const { useStream } = nimmsync.connect(definition, nimreact);
+const { useStream, useMessageStream } = nimmsync.connect(definition, nimreact);
 
 nimmsync.connectSocketIOServer(definition, io);
 
 module.exports = {
-  useStream
+  useStream,
+  useMessageStream,
+  users,
+  showOptions,
+  user,
+  states,
+  currentUsername,
+  currentState,
+  imageids,
+  images,
+  image,
+  newImages
 };

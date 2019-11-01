@@ -1,13 +1,22 @@
-const { useStream } = require("./hooksSystem");
+const {
+  useStream,
+  useMessageStream,
+  image,
+  newImages,
+  users
+} = require("./hooksSystem");
 
 const useUsers = function() {
-  const [users, { set }] = useStream("users");
+  const [users, { set, updateMember }] = useStream("users");
 
   const setUsers = users => {
     set(users);
   };
+  const updateUser = (username, u) => {
+    updateMember(username, u);
+  };
 
-  return { users, setUsers };
+  return { users, setUsers, updateUser };
 };
 const useStates = function() {
   const [states, { set }] = useStream("states");
@@ -31,13 +40,18 @@ const useCurrentState = function() {
   return { currentState };
 };
 const useNewImages = function() {
-  const [newImages] = useStream("new-images");
-  return { newImages };
+  const [newImages, { push }] = useStream("new-images");
+  const pushNewImages = images => push(...images);
+  return { newImages, pushNewImages };
 };
 const useImages = function() {
   const [images, { set }] = useStream("images");
   const setImages = i => set(i);
   return { images, setImages };
+};
+const useImageUpdates = function(fn) {
+  const ondata = useMessageStream(image.update);
+  ondata(message => fn(message.at, message.args[0]));
 };
 
 module.exports = {
@@ -50,5 +64,8 @@ module.exports = {
   useCurrentUsername,
   useCurrentState,
   useNewImages,
-  useImages
+  useImages,
+  useImageUpdates,
+  userNewImageUpdates,
+  useUserUpdates
 };
