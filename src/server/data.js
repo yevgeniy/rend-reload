@@ -6,7 +6,8 @@ const {
   useRef
 } = require("nimm-react");
 const {
-  useImageUpdates,
+  useImage,
+
   useMongoDb,
   useUsers,
   useStates,
@@ -28,10 +29,12 @@ module.exports = function({ datetime }) {
 };
 
 function updateImage({ db }) {
-  useImageUpdates(async (id, updates) => {
+  const {image, on}=useImage();
+  on('update-image', (id,updates)=> {
     await db.collection("images").updateOne({ id }, { $set: updates });
     return true;
-  });
+  })
+  
 }
 function saveNewImages({ db }) {
   userNewImageUpdates(async newimages => {

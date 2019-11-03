@@ -1,5 +1,5 @@
 const {
-  useStream,
+  useOpenStream,
   useMessageStream,
   image,
   newImages,
@@ -7,7 +7,7 @@ const {
 } = require("./hooksSystem");
 
 const useUsers = function() {
-  const [users, { set, updateMember }] = useStream("users");
+  const [users, { set, updateMember }] = useOpenStream("users");
 
   const setUsers = users => {
     set(users);
@@ -19,7 +19,7 @@ const useUsers = function() {
   return { users, setUsers, updateUser };
 };
 const useStates = function() {
-  const [states, { set }] = useStream("states");
+  const [states, { set }] = useOpenStream("states");
 
   const setStates = states => {
     set(states);
@@ -28,30 +28,35 @@ const useStates = function() {
   return { states, setStates };
 };
 const useShowOptions = function() {
-  const [showOptions] = useStream("show-options");
+  const [showOptions] = useOpenStream("show-options");
   return { showOptions };
 };
 const useCurrentUsername = function() {
-  const [currentUsername] = useStream("current-username");
+  const [currentUsername] = useOpenStream("current-username");
   return { currentUsername };
 };
 const useCurrentState = function() {
-  const [currentState] = useStream("current-state");
+  const [currentState] = useOpenStream("current-state");
   return { currentState };
 };
 const useNewImages = function() {
-  const [newImages, { push }] = useStream("new-images");
+  const [newImages, { push }] = useOpenStream("new-images");
   const pushNewImages = images => push(...images);
   return { newImages, pushNewImages };
 };
 const useImages = function() {
-  const [images, { set }] = useStream("images");
+  const [images, { set }] = useOpenStream("images");
   const setImages = i => set(i);
   return { images, setImages };
 };
-const useImageUpdates = function(fn) {
-  const ondata = useMessageStream(image.update);
-  ondata(message => fn(message.at, message.args[0]));
+const useImage = function(at) {
+  const [image, { on }] = useOpenStream("image", at);
+  /* const {on}=useMessageStream('image', at) */
+
+  /* const [image, {on,open}]=useStream('image', at);
+     open(); */
+
+  return { image, on };
 };
 
 module.exports = {
