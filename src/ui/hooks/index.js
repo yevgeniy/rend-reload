@@ -31,9 +31,9 @@ export const useImages = () => {
   return { images };
 };
 export const useImageIds = () => {
-  const [imageids] = useStream("image-ids", {
-    "images.set": ({ at }) => true
-  });
+  // const [imageids] = useStream("image-ids", {
+  //   "images.set": ({ at }) => true
+  // });
 
-  return { imageids };
+  return { imageids: [] };
 };

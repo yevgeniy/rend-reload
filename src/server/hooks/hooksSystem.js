@@ -20,15 +20,11 @@ const newImages = createChannel("new-images", {
   get: () => System.newImages,
   set: images => (System.newImages = images)
 });
+
 const images = createChannel("images", {
   get: () => System.images,
-  set: images => (System.images = images)
-});
-const imageids = createChannel("image-ids", {
-  get: () => System.images.map(v => v.id),
-  links: {
-    [images.set]: (out, { key, at, operation, args }) => out()
-  }
+  set: images => (System.images = images),
+  getImageIds: () => System.images.map(v => v.id)
 });
 const image = createChannel("image", {
   get: at => System.images.find(v => v.id === at)
@@ -76,7 +72,6 @@ const definition = nimmsync.create([
   states,
   currentUsername,
   currentState,
-  imageids,
   images,
   image,
   newImages
