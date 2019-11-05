@@ -22,7 +22,7 @@ function useMarkedImages() {
     });
   }, [db]);
 
-  return { markedImages };
+  return markedImages;
 }
 function useStateImages(currentState) {
   const db = useMongoDb();
@@ -52,7 +52,7 @@ function useStateImages(currentState) {
     };
   }, [db, currentState]);
 
-  return { stateImages };
+  return stateImages;
 }
 function useUserImages(currentUserName) {
   const db = useMongoDb();
@@ -82,7 +82,7 @@ function useUserImages(currentUserName) {
     };
   }, [db, currentUserName]);
 
-  return { userImages };
+  return userImages;
 }
 function useImageIds(username) {
   const db = useMongoDb();

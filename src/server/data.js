@@ -6,13 +6,10 @@ const {
   useRef
 } = require("nimm-react");
 const {
-  useImage,
-
   useMongoDb,
-  useUsers,
-  useStates,
-  userNewImageUpdates,
-  useUserUpdates
+  useOpenStream,
+  useMessageStream,
+  useStream,
 } = require("./hooks");
 
 module.exports = function({ datetime }) {
@@ -29,8 +26,8 @@ module.exports = function({ datetime }) {
 };
 
 function updateImage({ db }) {
-  const {image, on}=useImage();
-  on('update-image', (id,updates)=> {
+  const {on}=useMessageStream('image');
+  on('save-image', async (id,updates)=> {
     await db.collection("images").updateOne({ id }, { $set: updates });
     return true;
   })
@@ -65,17 +62,17 @@ function updateUser({ db }) {
 }
 
 function loadStates({ db }) {
-  const { setStates } = useStates();
+  const { set } = useMessageStream('states')
 
   useEffect(() => {
     db.collection("images").distinct("datetime", (err, times) =>
-      setStates(times)
+      set(times)
     );
   }, []);
 }
 
 function loadUsers({ db }) {
-  const { setUsers } = useUsers();
+  const { set } = useMessageStream('users');
 
   useEffect(() => {
     db.collection("users")
@@ -83,7 +80,7 @@ function loadUsers({ db }) {
       .toArray((err, users) => {
         err && console.log(err);
         console.log("LOADED USERS");
-        setUsers(users);
+        set(users);
       });
   }, []);
 }

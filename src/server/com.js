@@ -1,15 +1,10 @@
 const { component, useState, useEffect } = require("nimm-react");
 const {
-  useNewImages,
-  useShowOptions,
-  useImages,
-  useCurrentState,
-  useCurrentUsername,
+  useOpenStream,
+  useMessageStream,
   useMarkedImages,
-  useStateImages,
   useUserImages,
-  useUsers,
-  useImageIds
+  useStateImages,
 } = require("./hooks");
 
 if (process.argv.indexOf("--nobrowser") == -1)
@@ -36,15 +31,15 @@ if (process.argv.indexOf("--nobrowser") == -1)
 module.exports = function({ datetime }) {
   return [
     component(setImages),
-    component(stripImagesForUsers, { datetime })
+    //component(stripImagesForUsers, { datetime })
     //component(stripImagesForUsers, {users, setImages, setUsers, model, datetime, updateNewImages, setNewimages})
   ];
 };
 
 function setImages() {
-  const { currentUsername } = useCurrentUsername();
-  const { currentState } = useCurrentState();
-  const { showOptions } = useShowOptions();
+  const [currentUsername] = useOpenStream('current-username');
+  const [currentState] = useOpenStream('current-state');
+  const [showOptions] = useOpenStream('show-options');
 
   console.log(`username:${currentUsername}, state:${currentState}`);
 
@@ -58,33 +53,31 @@ function setImages() {
 }
 
 function setImages_new() {
-  const { newImages } = useNewImages();
-  const { setImages } = useImages();
+  const [ newImages ] = useOpenStream('new-images');
+  const { set } = useMessageStream('images');
 
-  setImages(newImages);
+  set(newImages||[]);
 }
 function setImages_marked() {
-  const { markedImages } = useMarkedImages();
-  const { setImages } = useImages();
+  const  markedImages = useMarkedImages();
+  const { set } = useMessageStream('images');
 
-  useEffect(() => {
-    setImages(markedImages || []);
-  }, markedImages);
+  set(markedImages || []);
 }
 function setImages_state({ currentState }) {
-  const { stateImages } = useStateImages(currentState);
-  const { setImages } = useImages();
+  const stateImages = useStateImages(currentState);
+  const { set } = useMessageStream('images');
 
   useEffect(() => {
-    setImages(stateImages || []);
+    set(stateImages || []);
   }, [currentState, stateImages]);
 }
 function setImages_user({ currentUsername, showOptions }) {
-  const { userImages } = useUserImages(currentUsername);
-  const { setImages } = useImages();
+  const userImages = useUserImages(currentUsername);
+  const { set } = useMessageStream('images');
 
   useEffect(() => {
-    setImages(userImages || []);
+    set(userImages || []);
   }, [currentUsername, userImages]);
 }
 
