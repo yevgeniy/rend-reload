@@ -27,8 +27,7 @@ const images = createChannel("images", {
   getImageIds: () => System.images.map(v => v.id)
 });
 const image = createChannel("image", {
-  get: at => System.images.find(v => v.id === at),
-  'save-image':()=>{}
+  get: at => System.images.find(v => v.id === at)
 });
 const currentState = createChannel("current-state", {
   get: () => System.currentState,
@@ -42,7 +41,9 @@ const users = createChannel("users", {
   get: () => System.users,
   set: users => (System.users = users),
   updateMember: (username, u) => {
-    System.users=System.users.map(v=>v.username===username ? {...v,...u} : v);
+    System.users = System.users.map(v =>
+      v.username === username ? { ...v, ...u } : v
+    );
   }
 });
 const states = createChannel("states", {
@@ -70,7 +71,10 @@ const definition = nimmsync.create([
   image,
   newImages
 ]);
-const { useStream, useMessageStream, useOpenStream } = nimmsync.connect(definition, nimreact);
+const { useStream, useMessageStream, useOpenStream } = nimmsync.connect(
+  definition,
+  nimreact
+);
 
 nimmsync.connectSocketIOServer(definition, io);
 

@@ -9,7 +9,7 @@ const {
   useMongoDb,
   useOpenStream,
   useMessageStream,
-  useStream,
+  useStream
 } = require("./hooks");
 
 module.exports = function({ datetime }) {
@@ -26,12 +26,11 @@ module.exports = function({ datetime }) {
 };
 
 function updateImage({ db }) {
-  const {on}=useMessageStream('image');
-  on('save-image', async ([updates], {id})=> {
+  const { on } = useMessageStream("image");
+  on("update", async ([updates], { at: id }) => {
     await db.collection("images").updateOne({ id }, { $set: updates });
     return true;
-  })
-  
+  });
 }
 function saveNewImages({ db }) {
   userNewImageUpdates(async newimages => {
@@ -62,17 +61,15 @@ function updateUser({ db }) {
 }
 
 function loadStates({ db }) {
-  const { set } = useMessageStream('states')
+  const { set } = useMessageStream("states");
 
   useEffect(() => {
-    db.collection("images").distinct("datetime", (err, times) =>
-      set(times)
-    );
+    db.collection("images").distinct("datetime", (err, times) => set(times));
   }, []);
 }
 
 function loadUsers({ db }) {
-  const { set } = useMessageStream('users');
+  const { set } = useMessageStream("users");
 
   useEffect(() => {
     db.collection("users")
