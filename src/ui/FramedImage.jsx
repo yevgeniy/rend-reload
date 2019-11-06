@@ -1,6 +1,13 @@
-var React=require('react');
-const {useState, useEffect, useRef}=require('react');
-var style=require('styled-components').default;
+import React, {useState,useEffect} from 'react';
+import {makeStyles} from '@material-ui/core';
+import {useOpenStream} from './hooks';
+
+const useStyles=makeStyles(theme=> {
+    return {
+        root:{}
+    }
+})
+
 
 const FrameDiv=style.div`
     position:fixed;
@@ -24,22 +31,17 @@ const Button=style.div`
 
 `;
 
-function FramedImage({updateImage, setSelectedImage, ...img}) {
+const FramedImage=React.memo( ({setSelectedImage, id}) =>{
 
-    const [imgOpacity, setImgOpacity]=useState(0);
+    const classes=useStyles();
+
+    const [img, {update:updateImage}]=useOpenStream('image', id)
+
     const settingNodeRef=useRef();
     const imgRef=useRef();
 
     useEffect(()=> {
-        if (imgRef.current.complete)
-            setImgOpacity(1);
-        else
-            imgRef.current.onload=()=>{
-                setImgOpacity(1);
-            }
-    },[]);
-    useEffect(()=> {
-        
+
 
         const repos=()=>{
             settingNodeRef.current.style.width = window.innerWidth+'px';
@@ -57,15 +59,14 @@ function FramedImage({updateImage, setSelectedImage, ...img}) {
     },[])
 
     const close=()=>setSelectedImage(null);
-    const mark=()=>updateImage(img.id, {marked:!img.marked})
-    const drawn=()=>updateImage(img.id, {drawn:!img.drawn})
-    const drawing=()=>updateImage(img.id,{drawing:!img.drawing})
+    const mark=()=>updateImage(id, {marked:!img.marked})
+    const drawn=()=>updateImage(id, {drawn:!img.drawn})
+    const drawing=()=>updateImage(id,{drawing:!img.drawing})
     
     return (
         <div className="full-frame outer" >
             <FrameDiv >
                 <Background/>
-                
                 
                 <ImgSetting ref={settingNodeRef}>
                     <img className='tween-all' src={img.reg}
@@ -87,8 +88,6 @@ function FramedImage({updateImage, setSelectedImage, ...img}) {
             </FrameDiv>
         </div>
     )
-}
+});
 
-module.exports={
-    FramedImage
-}
+export default FramedImage;

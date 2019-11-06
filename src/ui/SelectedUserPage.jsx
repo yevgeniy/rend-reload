@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { AppBar, Toolbar, Typography, makeStyles } from "@material-ui/core";
 import { useOpenStream, useMessageStream } from "./hooks";
 import ImageItem from "./ImageItem";
+import FramedImage from './FramedImage';
 
 const useStyles = makeStyles(theme => {
   return {
@@ -43,35 +44,25 @@ const SelectedUserPage = props => {
   const {
     watch: imagesWatch,
     request: imagesRequest,
-    messageHandlers
   } = useMessageStream("images");
 
-  console.log(messageHandlers.length);
   imagesWatch("set", message => {
-    console.log(message);
     imagesRequest("getImageIds").then(setimageids);
   });
-  console.log(currentUsername, user, imageids);
-  return null;
 
   const { scrollTop, screenHeight } = useScrolling();
   const marking = useM();
 
   const [selectedImage, setSelectedImage] = useState(null);
-
+  
   const renderFrame = () => {
-    return null;
-    // const img= window.System.model.images.find(v=>v.id===selectedImage)
-    // if (!img)
-    //     return null;
-    // return <div></div>
+    if (!selectedImage)
+      return null;
 
-    // return (<FramedImage id={img.id} reg={img.reg}
-    //     marked={img.marked}
-    //     drawn={img.drawn}
-    //     drawing={img.drawing}
-    //     setSelectedImage={setSelectedImage}
-    //     updateImage={updateImage} />)
+    return (<FramedImage
+        id={selectedImage}
+        setSelectedImage={setSelectedImage}
+         />)
   };
   const renderUserHeader = () => {
     if (!user) return;
