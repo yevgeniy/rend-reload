@@ -1,5 +1,5 @@
 import React from "react";
-import { useUsers, useStates } from "./hooks";
+import { useOpenStream, useMessageStream,useStream } from "./hooks";
 import { Link } from "react-router-dom";
 import { makeStyles, Chip, Avatar, Divider } from "@material-ui/core";
 
@@ -18,8 +18,10 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const UsersPage = React.memo(() => {
-  const { users } = useUsers();
-  const states = useStates() || [];
+  const [users] = useOpenStream('users');
+  let [states] = useOpenStream('states');
+  states=states||[];
+  
   const classes = useStyles();
 
   const handleDelete = () => {};

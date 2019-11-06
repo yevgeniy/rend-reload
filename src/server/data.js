@@ -27,7 +27,7 @@ module.exports = function({ datetime }) {
 
 function updateImage({ db }) {
   const {on}=useMessageStream('image');
-  on('save-image', async (id,updates)=> {
+  on('save-image', async ([updates], {id})=> {
     await db.collection("images").updateOne({ id }, { $set: updates });
     return true;
   })

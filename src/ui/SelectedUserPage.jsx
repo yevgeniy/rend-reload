@@ -2,7 +2,7 @@ import React from 'react';
 import {useState, useEffect} from 'react';
 import clsx from 'clsx';
 import {AppBar,Toolbar,Typography,makeStyles} from '@material-ui/core'
-import {useCurrentUsername, useCurrentState, useImageIds} from './hooks';
+import {useOpenStream,useMessageStream} from './hooks';
 import ImageItem from './ImageItem';
 
 
@@ -21,10 +21,17 @@ const useStyles=makeStyles(theme=> {
 
 const SelectedUserPage=(props)=> {
     const classes=useStyles();
-    const {currentUsername, user, setCurrentUsername}=useCurrentUsername();
-    const {currentState:selectedState, setCurrentState}=useCurrentState();
+    const[currentUsername,{set:setCurrentUsername}]=useOpenStream('current-username');
+    const[user]=useOpenStream('user', currentUsername);
+
+    const[selectedState, {set:setCurrentState}]=useOpenStream('current-state');
     
-    const {imageids} = useImageIds();
+    const [imageids, setimageids]=useState([])
+    const {watch:imagesWatch,request:imagesRequest}=useMessageStream('images');
+    imagesWatch(message => {
+        imagesRequest('image-ids').then(setimageids);
+    });
+    
     const {scrollTop, screenHeight} = useScrolling();
     const marking=useM();
 
