@@ -264,7 +264,8 @@ module.exports = {
   },
   loggedInBrowser: function() {
     return browserSystem.then(v => v.browsers[0]);
-  }
+  },
+  Key,
 };
 
 // var webdriver = require('selenium-webdriver');

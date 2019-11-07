@@ -1,4 +1,5 @@
 const browsersystem = require("./");
+
 const { workgen } = require("../helpers");
 const FS = require("fs");
 const PATH = require("path");
@@ -7,14 +8,22 @@ const { default: ChannelStream } = require("./ChannelStream");
 workgen(function*() {
   const browser = yield browsersystem.loggedInBrowser();
   const stream = new ChannelStream();
+  let w;
   watchStream(stream);
 
   while (true) {
     const fn = yield stream.read();
 
     try {
-      const res = yield fn("hello");
+console.log('killing')      
+      w && w.kill();
+
+
+      w=workgen(fn([workgen, browser, browsersystem.Key, x=>console.log(x)]))
+      w.catch(e=>{throw e;});
+      w.then(v=>console.log(v))
     } catch (e) {
+      w=null;
       console.log("ERROR", e);
     }
   }
@@ -35,6 +44,12 @@ function work() {
   var c = function*() {};
   const construct = c.constructor;
 
-  const fn = new construct("browser", data);
-  return fn;
+  try {
+    const fn = new construct("args", data);
+    return fn;
+  } catch(e) {
+    console.log('bad hot.js')
+  }
+  
+  
 }
