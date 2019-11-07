@@ -87,39 +87,36 @@ function stripImagesForUsers({ datetime }) {
 
   const [ran, setRan] = useState([]);
   const [running, setRunning] = useState(null);
-  const { currentUsername } = useCurrentUsername();
-  const { users } = useUsers();
+  const [currentUsername] = useOpenStream("current-username");
+  const [users] = useOpenStream("users");
 
-  if (!users) return;
+  useEffect(() => {
+    if (!users) return;
 
-  if (!running) {
     if (currentUsername)
       var currentuser = users.find(x => x.username == currentUsername);
 
-    var userstorun = [
+    var [userToRun] = [
       ...(currentuser ? [currentuser] : []),
       ...users
     ].nimmunique(ran, "username");
 
-    var [user] = userstorun;
-    if (!user) {
+    if (!userToRun) {
       console.log("ALL USERS RAN");
-      return;
     }
-    setRunning(user);
-  }
+    setRunning(userToRun);
+  }, [users, currentUsername, ran]);
 
   if (!running) return;
 
   return component(getImagesRunner, {
-    setRunning,
     setRan,
     timeIndex: datetime,
     ...running
   });
 }
 var c = 0;
-function getImagesRunner({ setRunning, setRan, timeIndex, ...user }) {
+function getImagesRunner({ setRan, timeIndex, ...user }) {
   const imageIds = useImageIds(user.username);
   const [, { updateUser }] = useUsers();
   const [, { pushNewImages }] = useNewImages();
@@ -156,7 +153,6 @@ function getImagesRunner({ setRunning, setRan, timeIndex, ...user }) {
           lastUpdated: timeIndex
         });
         setRan(ran => [...ran, user]);
-        setRunning(null);
       });
   }, userimages);
 }

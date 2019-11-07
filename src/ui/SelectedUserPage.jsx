@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { AppBar, Toolbar, Typography, makeStyles } from "@material-ui/core";
 import { useOpenStream, useMessageStream } from "./hooks";
 import ImageItem from "./ImageItem";
-import FramedImage from './FramedImage';
+import FramedImage from "./FramedImage";
 
 const useStyles = makeStyles(theme => {
   return {
@@ -41,12 +41,11 @@ const SelectedUserPage = props => {
   }, []);
 
   const [imageids, setimageids] = useState([]);
-  const {
-    watch: imagesWatch,
-    request: imagesRequest,
-  } = useMessageStream("images");
+  const { watch: imagesWatch, request: imagesRequest } = useMessageStream(
+    "images"
+  );
 
-  imagesWatch("set", message => {
+  imagesWatch("set", () => {
     imagesRequest("getImageIds").then(setimageids);
   });
 
@@ -54,44 +53,15 @@ const SelectedUserPage = props => {
   const marking = useM();
 
   const [selectedImage, setSelectedImage] = useState(null);
-  
-  const renderFrame = () => {
-    if (!selectedImage)
-      return null;
 
-    return (<FramedImage
-        id={selectedImage}
-        setSelectedImage={setSelectedImage}
-         />)
-  };
-  const renderUserHeader = () => {
-    if (!user) return;
-    return (
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6">{user.username}</Typography>
-        </Toolbar>
-      </AppBar>
-    );
-  };
-  const renderStateHeader = () => {
-    if (!selectedState) return;
-    return (
-      <AppBar>
-        <Toolbar>
-          <Typography variant="h6">{selectedState}</Typography>
-        </Toolbar>
-      </AppBar>
-    );
-  };
   return (
     <div
       className={clsx(classes.root, {
         [classes.marking]: marking
       })}
     >
-      {renderUserHeader()}
-      {renderStateHeader()}
+      <UserHeader username={user.username} />
+      <StateHeader selectedState={selectedState} />
 
       <div className={classes.images}>
         {(imageids || []).map((v, i) => {
@@ -109,10 +79,32 @@ const SelectedUserPage = props => {
         })}
       </div>
 
-      {renderFrame()}
+      {selectedImage && (
+        <FramedImage id={selectedImage} setSelectedImage={setSelectedImage} />
+      )}
     </div>
   );
 };
+const UserHeader = React.memo(({ username }) => {
+  if (!username) return null;
+  return (
+    <AppBar position="static">
+      <Toolbar>
+        <Typography variant="h6">{username}</Typography>
+      </Toolbar>
+    </AppBar>
+  );
+});
+const StateHeader = React.memo(({ selectedState }) => {
+  if (!selectedState) return null;
+  return (
+    <AppBar>
+      <Toolbar>
+        <Typography variant="h6">{selectedState}</Typography>
+      </Toolbar>
+    </AppBar>
+  );
+});
 
 function useScrolling() {
   const [scrollTop, setScrollTop] = useState(0);
