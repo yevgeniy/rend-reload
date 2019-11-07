@@ -91,10 +91,8 @@ function useImageIds(username) {
   useEffect(() => {
     if (!db) return;
 
-    db.collection("images").distinct(
-      "id",
-      { username: user.username },
-      (err, ids) => setIds(ids)
+    db.collection("images").distinct("id", { username }, (err, ids) =>
+      setIds(ids)
     );
   }, [db]);
 

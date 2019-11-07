@@ -6,6 +6,7 @@ const {
   useUserImages,
   useStateImages
 } = require("./hooks");
+const { workgen } = require("./helpers");
 
 if (process.argv.indexOf("--nobrowser") == -1)
   var browser = require("../browser");
@@ -118,41 +119,43 @@ function stripImagesForUsers({ datetime }) {
 var c = 0;
 function getImagesRunner({ setRan, timeIndex, ...user }) {
   const imageIds = useImageIds(user.username);
-  const [, { updateUser }] = useUsers();
-  const [, { pushNewImages }] = useNewImages();
-
-  if (!imageIds) return;
+  const { update: updateUser } = useMessageStream("user");
+  const { add: pushNewImages } = useMessageStream("new-images");
 
   useEffect(() => {
+    if (!imageIds) return;
+
     let userimages = imageIds.map(x => {
       return { id: x };
     });
 
-    browser
-      .getImages(
-        user.url.replace(/\/$/, "") + "/gallery/?catpath=/",
-        true,
-        userimages,
-        imgs => {
-          var newimages = imgs.nimmunique(userimages, "id");
-          newimages.forEach(x => {
-            x.username = user.username;
-            x.seen = false;
-            x.datetime = timeIndex;
-          });
+    const runner = browser.getImagesStream(
+      user.url.replace(/\/$/, "") + "/gallery/?catpath=/",
+      true,
+      userimages
+    );
 
-          userimages.push(...newimages);
-
-          updateUser(user.username, { imgcount: userimages.length });
-          pushNewImages(newimages);
-        }
-      )
-      .then(() => {
-        updateUser(user.username, {
-          reachedBottom: true,
-          lastUpdated: timeIndex
+    workgen(function*() {
+      let imgs;
+      while ((imgs = yield runner.read())) {
+        var newimages = imgs.nimmunique(userimages, "id");
+        newimages.forEach(x => {
+          x.username = user.username;
+          x.seen = false;
+          x.datetime = timeIndex;
         });
-        setRan(ran => [...ran, user]);
+
+        userimages.push(...newimages);
+
+        updateUser(user.username, { imgcount: userimages.length });
+        pushNewImages(newimages);
+      }
+    }).then(() => {
+      updateUser(user.username, {
+        reachedBottom: true,
+        lastUpdated: timeIndex
       });
-  }, userimages);
+      setRan(ran => [...ran, user]);
+    });
+  }, imageIds);
 }
