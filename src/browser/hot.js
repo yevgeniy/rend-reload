@@ -59,7 +59,6 @@ function* initialLoad() {
 }
 function* startScrollDown() {
     
-out('START SCROLL');    
     let scrollTop = yield browser.executeScript(`return window.scrollY`);
     while(true) {
         
@@ -76,21 +75,16 @@ out('START SCROLL');
     }  
 }
 
-let imagesOnPage = null;
 let newimages;
 const url='https://www.deviantart.com/twistedscarlett60/gallery/';
 
 yield browser.navigate(url).ready(3000); 
-let existing=[];
-let seen=[...existing];
-
-
-out('starting')   
+let dbimages=[];
+let seen=[];
 
 yield initialLoad();
 
-out('a');
-let t= workgen(startScrollDown());
+workgen(startScrollDown());
 
 let ti;
 while(true) {
@@ -102,9 +96,8 @@ while(true) {
         ti= +new Date(); 
     }  
 
-
-    /*if we found existing images*/
-    if (allimages.nimmjoin(existing,'id').length || +new Date()-ti >10000) {
+    /*if we found existing images or timedout*/
+    if (allimages.nimmjoin(dbimages,'id').length || +new Date()-ti >10000) {
         t.kill();
         out(null);
         break;
@@ -114,8 +107,4 @@ while(true) {
   
     yield Promise.delay(1000);
 }
-
-// imagesOnPage = yield scrapeForNewImages(imagesOnPage);
-// newimages = imagesOnPage.nimmunique(seen, "id");
-// out(newimages.length);
          

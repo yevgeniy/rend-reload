@@ -3,11 +3,11 @@ const browsersystem = require("./");
 const { workgen } = require("../helpers");
 const FS = require("fs");
 const PATH = require("path");
-const { default: ChannelStream } = require("./ChannelStream");
+const { default: MessageStream } = require("../MessageStream");
 
 workgen(function*() {
   const browser = yield browsersystem.loggedInBrowser();
-  const stream = new ChannelStream();
+  const stream = new MessageStream();
   let w;
   watchStream(stream);
 
@@ -15,15 +15,18 @@ workgen(function*() {
     const fn = yield stream.read();
 
     try {
-console.log('killing')      
+      console.log("killing");
       w && w.kill();
 
-
-      w=workgen(fn([workgen, browser, browsersystem.Key, x=>console.log(x)]))
-      w.catch(e=>{throw e;});
-      w.then(v=>console.log(v))
+      w = workgen(
+        fn([workgen, browser, browsersystem.Key, x => console.log(x)])
+      );
+      w.catch(e => {
+        throw e;
+      });
+      w.then(v => console.log(v));
     } catch (e) {
-      w=null;
+      w = null;
       console.log("ERROR", e);
     }
   }
@@ -47,9 +50,7 @@ function work() {
   try {
     const fn = new construct("args", data);
     return fn;
-  } catch(e) {
-    console.log('bad hot.js')
+  } catch (e) {
+    console.log("bad hot.js");
   }
-  
-  
 }

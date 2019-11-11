@@ -131,7 +131,6 @@ function getImagesRunner({ setRan, timeIndex, ...user }) {
 
     const runner = browser.getImagesStream(
       user.url.replace(/\/$/, "") + "/gallery/?catpath=/",
-      true,
       userimages
     );
 

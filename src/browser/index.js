@@ -1,6 +1,6 @@
 const { Key } = require("selenium-webdriver");
 var W = require("nimm-warden").Warden;
-const { default: ChannelStream } = require("./ChannelStream");
+const { default: MessageStream } = require("../MessageStream");
 const { workgen } = require("../helpers");
 
 var Browser = require("./browser").Browser;
@@ -15,6 +15,7 @@ if (!Promise.delay)
 class BrowserSystem {
   constructor(system) {
     this.system = system;
+    this.readyBrowsers = new MessageStream();
   }
   async init() {
     this.browsers = [
@@ -27,142 +28,130 @@ class BrowserSystem {
       x.navigate("http://deviantart.com").start()
     );
     await Promise.all(res);
+    this.readyBrowsers.push(...this.browsers);
   }
 
   getUsers() {
-    return new Promise(res => {
-      W(this)("browsers.*.ready").observe(async w => {
-        var browser = this.browsers.find(x => x.ready == true);
-        if (!browser) return;
-        w.destroy();
-        browser.ready = false;
-        console.log("clicking");
-        await browser
-          .find("#friendslink")
-          .then(r => r.click())
-          .catch(e => {
-            console.log("FRIEND LINK");
-          });
-        console.log("CLICKED");
-        var users = await wait(async () => {
-          console.log("finding users");
-          var res = await browser.executeScript(`
-						var elms = [].slice.call(document.querySelectorAll('.popup2-friends-menu a.username'));
-						return elms
-							.map(function(elm) {
-								return {
-									username:elm.innerHTML,
-									url:elm.getAttribute('href'),
-									datetime:+new Date()
-								}
-						});
-					`);
-          console.log(res.length);
-          if (!res.length) return null;
-          return res;
+    const {readyBrowsers}=this;
+    
+    return workgen(function*() {
+      let browser = yield readyBrowsers.read();
+      
+      browser.ready=false;
+      yield browser
+        .find("#friendslink")
+        .then(r => r.click())
+        .catch(e => {
+          console.log("FRIEND LINK");
         });
-        browser.ready = true;
-        res(users);
+      
+      var users = yield wait(async () => {
+        console.log("finding users");
+        var res = yield browser.executeScript(`
+          var elms = [].slice.call(document.querySelectorAll('.popup2-friends-menu a.username'));
+          return elms
+            .map(function(elm) {
+              return {
+                username:elm.innerHTML,
+                url:elm.getAttribute('href'),
+                datetime:+new Date()
+              }
+          });
+        `);
+        console.log(res.length);
+        if (!res.length) return null;
+        return res;
       });
+      browser.ready=true;
+      readyBrowsers.push(browser)
+      return users;
     });
   }
-  getImagesStream(url, update, seen) {
-    const stream = new ChannelStream();
+  getImagesStream(url, dbimages) {
+    const{readyBrowsers}=this;
+    
+    return new MessageStream(async function*() {
+      const browser=await readyBrowsers.read();
+      browser.ready=false;
 
-    W(this)("browsers.*.ready").observe(async w => {
-      var browser = this.browsers.find(v => v.ready);
-      if (!browser) return;
+      let newseenimages;
+      let seen = [];
+      let ti;
 
-      w.destroy();
-      browser.ready = false;
+      await browser.navigate(url).ready(3000);
 
-      async function scrapeImagesOnPage() {
-        await browser.find("body").then(x => x && x.sendKeys(Key.HOME));
+      await initialLoad(browser);
 
-        await browser.executeScript(
-          'document.querySelector("#comments").scrollIntoView()'
-        );
-        await Promise.delay(1000);
+      let scrollproc = workgen(startScrollDown(browser));
 
-        var res = await browser.executeScript(
-          `return [].slice.call( document.querySelectorAll('#gmi- .thumb')).map(function(v){
-									return {
-										thumb: v.querySelector('img').src,
-										reg: v.getAttribute('data-super-img'),
-										large: v.getAttribute('data-super-full-img'),
-										id: +v.getAttribute('data-deviationid')
-									}
-						}).filter(v=>{
-							return v && v.reg && v;
-						})`
-        );
-        return res;
-      }
+      while (true) {
+        let allimages = await scrapeImagesOnPage(browser);
+        newseenimages = allimages.nimmunique(seen, "id");
 
-      function* scrapeForNewImages(previousScrape) {
-        let ti = +new Date();
-
-        while (+new Date() - ti < 10000) {
-          let imagesOnPage = yield scrapeImagesOnPage();
-          if (!imagesOnPage.length) {
-            /*not yet loaded first batch of images*/
-            yield Promise.delay(500);
-            continue;
-          }
-
-          if (!previousScrape) {
-            /*first time loading the batch of images*/
-            return imagesOnPage;
-          }
-
-          if (imagesOnPage.unique(previousScrape, "id").length) {
-            /*got a new batch of images*/
-            return imagesOnPage;
-          }
-          yield Promise.delay(500);
+        if (newseenimages.length) {
+          yield newimages.map(v => v.id);
+          ti = +new Date();
         }
 
-        return previousScrape || [];
-      }
-
-      async function pageDown() {
-        await browser.executeScript(
-          'document.querySelector("#gmi-GZone").innerHTML=""'
-        );
-        await Promise.delay(1000);
-        await browser
-          .find("body")
-          .then(async x => x && (await x.sendKeys(Key.END)));
-      }
-
-      workgen(function*() {
-        let imagesOnPage = null;
-        let newimages;
-        yield browser.navigate(url).ready(3000);
-
-        while (true) {
-          imagesOnPage = yield scrapeForNewImages(imagesOnPage);
-          newimages = imagesOnPage.nimmunique(seen, "id");
-
-          /*stream new images*/
-          if (newimages.length) {
-            stream.push(newimages);
-          }
-
-          /*if there are no new images or
-			  if we found seen images on page then end the stream*/
-          if (!newimages.length || imagesOnPage.nimmjoin(seen, "id").length) {
-            stream.push(null);
-            break;
-          }
-
-          seen = [...seen, ...newimages];
-          yield pageDown();
+        /*if we found existing images or timedout*/
+        if (
+          allimages.nimmjoin(dbimages, "id").length ||
+          +new Date() - ti > 10000
+        ) {
+          scrollproc.kill();
+          yield null;
+          break;
         }
-      });
+
+        seen = [...seen, ...newseenimages];
+
+        await Promise.delay(1000);
+      }
+      browser.ready=true;
+      readyBrowsers.push(browser);
     });
 
-    return stream;
+    async function scrapeImagesOnPage(browser) {
+      var res = await browser.executeScript(
+        `return [].slice.call( document.querySelectorAll('#gmi- .thumb')).map(function(v){
+                                  return {
+                                      thumb: v.querySelector('img').src,
+                                      reg: v.getAttribute('data-super-img'),
+                                      large: v.getAttribute('data-super-full-img'),
+                                      id: +v.getAttribute('data-deviationid')
+                                  }
+                      }).filter(v=>{
+                          return v && v.reg && v;
+                      })`
+      );
+      return res;
+    }
+    function* initialLoad(browser) {
+      let ti = +new Date();
+
+      while (+new Date() - ti < 10000) {
+        let imagesOnPage = yield scrapeImagesOnPage(browser);
+        if (imagesOnPage.length) break;
+
+        yield Promise.delay(1000);
+      }
+    }
+    function* startScrollDown(browser) {
+      let scrollTop = yield browser.executeScript(`return window.scrollY`);
+      while (true) {
+        yield browser.find("body").then(x => x && x.sendKeys(Key.PAGE_DOWN));
+        yield Promise.delay(1000);
+
+        let s = yield browser.executeScript(`return window.scrollY`);
+        if (s === scrollTop) {
+          /*reached bottom*/
+          out("raeched bottom");
+          return;
+        }
+        scrollTop = s;
+      }
+    }
+
   }
 
   async login() {
@@ -265,7 +254,7 @@ module.exports = {
   loggedInBrowser: function() {
     return browserSystem.then(v => v.browsers[0]);
   },
-  Key,
+  Key
 };
 
 // var webdriver = require('selenium-webdriver');
