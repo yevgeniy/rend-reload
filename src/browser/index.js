@@ -32,22 +32,22 @@ class BrowserSystem {
   }
 
   getUsers() {
-    const {readyBrowsers}=this;
-    
+    const { readyBrowsers } = this;
+
     return workgen(function*() {
       let browser = yield readyBrowsers.read();
-      
-      browser.ready=false;
+
+      browser.ready = false;
       yield browser
         .find("#friendslink")
         .then(r => r.click())
         .catch(e => {
           console.log("FRIEND LINK");
         });
-      
+
       var users = yield wait(async () => {
         console.log("finding users");
-        var res = yield browser.executeScript(`
+        var res = await browser.executeScript(`
           var elms = [].slice.call(document.querySelectorAll('.popup2-friends-menu a.username'));
           return elms
             .map(function(elm) {
@@ -62,17 +62,17 @@ class BrowserSystem {
         if (!res.length) return null;
         return res;
       });
-      browser.ready=true;
-      readyBrowsers.push(browser)
+      browser.ready = true;
+      readyBrowsers.push(browser);
       return users;
     });
   }
   getImagesStream(url, dbimages) {
-    const{readyBrowsers}=this;
-    
+    const { readyBrowsers } = this;
+
     return new MessageStream(async function*() {
-      const browser=await readyBrowsers.read();
-      browser.ready=false;
+      const browser = await readyBrowsers.read();
+      browser.ready = false;
 
       let newseenimages;
       let seen = [];
@@ -107,7 +107,7 @@ class BrowserSystem {
 
         await Promise.delay(1000);
       }
-      browser.ready=true;
+      browser.ready = true;
       readyBrowsers.push(browser);
     });
 
@@ -151,7 +151,6 @@ class BrowserSystem {
         scrollTop = s;
       }
     }
-
   }
 
   async login() {

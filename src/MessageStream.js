@@ -3,6 +3,7 @@ const { workgen } = require("./helpers");
 class MessageStream {
   constructor(fn) {
     this._messages = [];
+    this._requests = [];
 
     fn && this.workgen(fn);
   }
@@ -18,20 +19,24 @@ class MessageStream {
     }
   }
   push(...message) {
-    this._messages.push(...message);
-    this._onmessage && this._onmessage();
+    let m;
+    while ((m = message.shift())) {
+      let request = this._requests.shift();
+      if (request) {
+        request(m);
+        continue;
+      }
+
+      this._messages.push(m);
+    }
   }
   read() {
+    let message = this._messages.shift();
+
+    if (message) return Promise.resolve(message);
+
     return new Promise(res => {
-      const work = () => {
-        this._onmessage = null;
-        if (!this._messages.length) this._onmessage = work;
-        else {
-          const m = this._messages.shift();
-          res(m);
-        }
-      };
-      work();
+      this._requests.push(res);
     });
   }
 }
