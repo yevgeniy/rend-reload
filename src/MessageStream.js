@@ -4,6 +4,7 @@ class MessageStream {
   constructor(fn) {
     this._messages = [];
     this._requests = [];
+    this._onread = [];
 
     fn && this.workgen(fn);
   }
@@ -30,7 +31,12 @@ class MessageStream {
       this._messages.push(m);
     }
   }
+  pushUnique(...message) {
+    message = message.filter(v => !this._messages.some(vv => vv === v));
+    this.push(...message);
+  }
   read() {
+    this._onread.forEach(v => v());
     let message = this._messages.shift();
 
     if (message) return Promise.resolve(message);
@@ -38,6 +44,12 @@ class MessageStream {
     return new Promise(res => {
       this._requests.push(res);
     });
+  }
+  onRead(fn) {
+    this._onread.push(fn);
+    return () => {
+      this._onread = this._onread.filter(v => v !== fn);
+    };
   }
 }
 

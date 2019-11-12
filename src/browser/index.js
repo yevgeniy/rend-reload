@@ -16,19 +16,26 @@ class BrowserSystem {
   constructor(system) {
     this.system = system;
     this.readyBrowsers = new MessageStream();
+    this.readyBrowsers.onRead(async () => {
+      await this.init();
+      await this.login();
+    });
+
+    this.Key = Key;
   }
+
   async init() {
     this.browsers = [
       new Browser(await Browser.init())
       // , new Browser(await Browser.init())
       // , new Browser(await Browser.init())
     ];
+    console.log(this.browsers[0]);
 
     const res = this.browsers.map(x =>
       x.navigate("http://deviantart.com").start()
     );
     await Promise.all(res);
-    this.readyBrowsers.push(...this.browsers);
   }
 
   getUsers() {
@@ -184,7 +191,6 @@ class BrowserSystem {
     }
 
     /*switch to old view*/
-
     elm = await wait(async () => await browser.find("._1vP6a"), 3000);
 
     if (elm)
@@ -197,7 +203,7 @@ class BrowserSystem {
 
     this.browsers.forEach(x => (x.ready = true));
 
-    W.queue();
+    this.readyBrowsers.pushUnique(...this.browsers);
   }
 }
 
@@ -233,28 +239,7 @@ function wait(fn, dur) {
   });
 }
 
-var browserSystem = new Promise(async res => {
-  var b = new BrowserSystem();
-  await b.init();
-  await b.login();
-  res(b);
-});
-
-module.exports = {
-  getUsers: function() {
-    return browserSystem.then(b => b.getUsers());
-  },
-  getImages: function(url, update, seenids, out) {
-    return browserSystem.then(b => b.getImages(url, update, seenids, out));
-  },
-  getImagesStream: function(url, update, seenids) {
-    return browserSystem.then(b => b.getImagesStream(url, update, seenids));
-  },
-  loggedInBrowser: function() {
-    return browserSystem.then(v => v.browsers[0]);
-  },
-  Key
-};
+module.exports = new BrowserSystem();
 
 // var webdriver = require('selenium-webdriver');
 // By=webdriver.By;

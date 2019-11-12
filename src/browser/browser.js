@@ -29,7 +29,12 @@ class Browser {
     this.ready = false;
   }
   static async init() {
-    if (process.platform == "linux") {
+    if (process.platform === "darwin") {
+      let driver = new webdriver.Builder().forBrowser("firefox").build();
+      driver = await driver;
+      console.log(driver);
+      return driver;
+    } else if (process.platform == "linux") {
       var service = new firefox.ServiceBuilder(
         PATH.join(__dirname, "../geckodriver_linux_32")
       ).build();
@@ -40,7 +45,7 @@ class Browser {
       ).build();
       var options = new firefox.Options();
     }
-    options.setBinary(CONFIG["mozilla-executable"]);
+    //options.setBinary(CONFIG["mozilla-executable"]);
     return firefox.Driver.createSession(options, service);
 
     /*

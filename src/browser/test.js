@@ -6,8 +6,8 @@ const PATH = require("path");
 const { default: MessageStream } = require("../MessageStream");
 
 workgen(function*() {
-  const browser = yield browsersystem.loggedInBrowser();
   const stream = new MessageStream();
+  yield browsersystem.init();
   let w;
   watchStream(stream);
 
@@ -19,7 +19,7 @@ workgen(function*() {
       w && w.kill();
 
       w = workgen(
-        fn([workgen, browser, browsersystem.Key, x => console.log(x)])
+        fn([workgen, browsersystem, browsersystem.Key, x => console.log(x)])
       );
       w.catch(e => {
         throw e;
