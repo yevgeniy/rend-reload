@@ -1,13 +1,20 @@
-const browsersystem = require("./");
+//const browsersystem = require("./");
 
 const { workgen } = require("../helpers");
 const FS = require("fs");
 const PATH = require("path");
 const { default: MessageStream } = require("../MessageStream");
+const cypress = require("cypress");
 
 workgen(function*() {
   const stream = new MessageStream();
-  yield browsersystem.init();
+  //yield browsersystem.init();
+  cypress.run({
+    browser: "chrome",
+    config: {
+      chromeWebSecurity: false
+    }
+  });
   let w;
   watchStream(stream);
 
@@ -18,9 +25,7 @@ workgen(function*() {
       console.log("killing");
       w && w.kill();
 
-      w = workgen(
-        fn([workgen, browsersystem, browsersystem.Key, x => console.log(x)])
-      );
+      w = workgen(fn([workgen, x => console.log(x)]));
       w.catch(e => {
         throw e;
       });
