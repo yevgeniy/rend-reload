@@ -19,8 +19,8 @@ module.exports = function({ datetime }) {
   return [
     component(loadUsers, { db }),
     component(loadStates, { db }),
-    component(updateImage, { db })
-    // component(saveNewImages, { db }),
+    component(updateImage, { db }),
+    component(saveNewImages, { db })
     // component(updateUser, { db })
   ];
 };
@@ -33,12 +33,17 @@ function updateImage({ db }) {
   });
 }
 function saveNewImages({ db }) {
-  userNewImageUpdates(async newimages => {
-    console.log(`NEW IMAGES: ${newimages[0].username}, ${newimgs.length}`);
-
+  const { on } = useMessageStream("new-images");
+  on("add", async newimages => {
     await Promise.all(
       newimages.map(v => {
-        return db.collection("images").insertOne(v);
+        console.log("NEW IMG", v);
+        if (v && v.id && v.thumb && v.reg && v.datetime) {
+          console.log("SAVING", v.id);
+          return db.collection("images").insertOne(v);
+        }
+
+        return Promise.resolve();
       })
     );
     return true;

@@ -26,7 +26,7 @@ function useMarkedImages() {
 }
 function useStateImages(currentState) {
   const db = useMongoDb();
-  const [stateImages, setStateImages] = useState(null);
+  let [stateImages, setStateImages] = useState(null);
 
   useEffect(() => {
     if (!db) return;
@@ -94,7 +94,7 @@ function useImageIds(username) {
     db.collection("images").distinct("id", { username }, (err, ids) =>
       setIds(ids)
     );
-  }, [db]);
+  }, [db, username]);
 
   return ids;
 }

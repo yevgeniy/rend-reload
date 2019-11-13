@@ -1,15 +1,14 @@
-const { component, useState, useEffect } = require("nimm-react");
+const { component, useState, useEffect, useRef } = require("nimm-react");
 const {
   useOpenStream,
   useMessageStream,
   useMarkedImages,
   useUserImages,
-  useStateImages
+  useStateImages,
+  useImageIds
 } = require("./hooks");
-const { workgen } = require("./helpers");
-
-if (process.argv.indexOf("--nobrowser") == -1)
-  var browser = require("../browser");
+const FS = require("fs");
+const { workgen } = require("../helpers");
 
 // var browser={
 //     getImages:function(a,b,c,fn) {
@@ -30,11 +29,7 @@ if (process.argv.indexOf("--nobrowser") == -1)
 // }
 
 module.exports = function({ datetime }) {
-  return [
-    component(setImages)
-    //component(stripImagesForUsers, { datetime })
-    //component(stripImagesForUsers, {users, setImages, setUsers, model, datetime, updateNewImages, setNewimages})
-  ];
+  return [component(setImages), component(stripImagesForUsers, { datetime })];
 };
 
 function setImages() {
@@ -70,6 +65,7 @@ function setImages_state({ currentState }) {
   const { set } = useMessageStream("images");
 
   useEffect(() => {
+    console.log("a", stateImages && stateImages.length);
     set(stateImages || []);
   }, [currentState, stateImages]);
 }
@@ -82,7 +78,6 @@ function setImages_user({ currentUsername, showOptions }) {
     set(userImages || []);
   }, [currentUsername, userImages]);
 }
-
 function stripImagesForUsers({ datetime }) {
   if (process.argv.indexOf("--nobrowser") > -1) return;
 
@@ -104,7 +99,9 @@ function stripImagesForUsers({ datetime }) {
 
     if (!userToRun) {
       console.log("ALL USERS RAN");
+      //printout(out.current);
     }
+
     setRunning(userToRun);
   }, [users, currentUsername, ran]);
 
@@ -112,49 +109,77 @@ function stripImagesForUsers({ datetime }) {
 
   return component(getImagesRunner, {
     setRan,
-    timeIndex: datetime,
+    instanceTime: datetime,
     ...running
   });
 }
 var c = 0;
-function getImagesRunner({ setRan, timeIndex, ...user }) {
+function getImagesRunner({ setRan, instanceTime, ...user }) {
   const imageIds = useImageIds(user.username);
-  const { update: updateUser } = useMessageStream("user");
-  const { add: pushNewImages } = useMessageStream("new-images");
+  const browsersystem = useBrowserSystem();
+  //const { update: updateUser } = useMessageStream("user");
+  const { add: addNewImages } = useMessageStream("new-images");
 
   useEffect(() => {
     if (!imageIds) return;
+    if (!browsersystem) return;
 
-    let userimages = imageIds.map(x => {
-      return { id: x };
-    });
-
-    const runner = browser.getImagesStream(
+    const runner = browsersystem.getImagesStream(
       user.url.replace(/\/$/, "") + "/gallery/?catpath=/",
-      userimages
+      imageIds
     );
 
+    console.log("RUNNING", user.username);
     workgen(function*() {
       let imgs;
-      while ((imgs = yield runner.read())) {
-        var newimages = imgs.nimmunique(userimages, "id");
+
+      while (true) {
+        imgs = yield runner.read();
+        if (imgs === null) break;
+
+        var newimages = imgs.nimmunique(imageIds, (a, b) => a.id === b);
         newimages.forEach(x => {
           x.username = user.username;
           x.seen = false;
-          x.datetime = timeIndex;
+          x.datetime = instanceTime;
         });
 
-        userimages.push(...newimages);
+        console.log("new", newimages.length);
+        imageIds.push(...newimages.map(v => v.id));
 
-        updateUser(user.username, { imgcount: userimages.length });
-        pushNewImages(newimages);
+        // updateUser(user.username, { imgcount: userimages.length });
+        addNewImages(...newimages);
       }
+      console.log("done", user.username);
     }).then(() => {
-      updateUser(user.username, {
-        reachedBottom: true,
-        lastUpdated: timeIndex
-      });
+      // updateUser(user.username, {
+      //   reachedBottom: true,
+      //   lastUpdated: timeIndex
+      // });
+      console.log("setting ran");
       setRan(ran => [...ran, user]);
     });
-  }, imageIds);
+  }, [imageIds, browsersystem]);
 }
+
+let bp = null;
+useBrowserSystem = function() {
+  let [b, setb] = useState(null);
+
+  useEffect(() => {
+    bp =
+      bp ||
+      (bp = new Promise(res => {
+        var browsersystem = require("../browser");
+
+        workgen(function*() {
+          yield browsersystem.init();
+          yield browsersystem.login();
+
+          res(browsersystem);
+        });
+      }));
+    bp.then(setb);
+  }, []);
+  return b;
+};

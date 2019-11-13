@@ -13,22 +13,48 @@ describe("foo", () => {
   });
 });
 
+function gotoPage(url) {
+  return new Promise(Res => {
+    function work() {
+      cy.visit(url, { failOnStatusCode: false }).then(() => {
+        if (
+          Cypress.$("body")
+            .html()
+            .match(`You don't have permission to access this page`)
+        ) {
+          cy.go("back");
+          cy.wait(2000).then(() => work());
+        } else Res();
+      });
+    }
+    work();
+  });
+}
+function writeImages(path, data) {
+  return new Promise(Res => {
+    cy.writeFile(path, data).then(() => Res());
+  });
+}
+
 let guid = 0;
 async function parseUser(entry) {
-  let { url, existing } = entry;
+  let { url, existing, username } = entry;
   let seen = [];
   let ti;
-  cy.visit(url);
 
-  await initialLoad();
+  await gotoPage(url);
+
+  let loaded = await initialLoad();
+  if (!loaded) return;
+
   while (true) {
     await pageDown();
     let allimages = await scrapeImagesOnPage();
     let newimages = allimages.filter(v => !seen.some(vv => vv.id == v.id));
     if (newimages.length) {
+      allimages.forEach(v => (v.username = username));
       ti = +new Date();
-      cy.writeFile(`src/browser/out/${++guid}.json`, newimages);
-      cy.task("newimages", newimages);
+      await writeImages(`src/out/${++guid}.json`, newimages);
     }
     seen = [...allimages];
 
@@ -52,20 +78,28 @@ function pageDown() {
 function scrapeImagesOnPage() {
   return new Promise(Res => {
     let res = [];
-    cy.get("#gmi- .thumb")
-      .each(function($v) {
-        res.push({
-          thumb: $v.find("img").attr("src"),
-          reg: $v.attr("data-super-img"),
-          large: $v.attr("data-super-full-img"),
-          id: +$v.attr("data-deviationid")
-        });
-      })
-      .then(() => {
-        res = res.filter(v => v && v.reg && v);
-        cy.log(JSON.stringify(res));
-        Res(res);
-      });
+
+    cy.get("body").then($body => {
+      let l = Cypress.$("#gmi- .thumb").length;
+      if (l === 0) {
+        Res([]);
+      } else {
+        cy.get("#gmi- .thumb")
+          .each(function($v) {
+            res.push({
+              thumb: $v.find("img").attr("src"),
+              reg: $v.attr("data-super-img"),
+              large: $v.attr("data-super-full-img"),
+              id: +$v.attr("data-deviationid")
+            });
+          })
+          .then(() => {
+            res = res.filter(v => v && v.reg && v);
+            cy.log(JSON.stringify(res));
+            Res(res);
+          });
+      }
+    });
   });
 }
 async function initialLoad() {
@@ -73,10 +107,11 @@ async function initialLoad() {
 
   while (+new Date() - ti < 10000) {
     let imagesOnPage = await scrapeImagesOnPage();
-    if (imagesOnPage.length) break;
+    if (imagesOnPage.length) return true;
 
-    await wait(500);
+    await new Promise(res => cy.wait(500).then(() => res()));
   }
+  return false;
 }
 function readUsers() {
   return new Promise(res => {
@@ -102,10 +137,27 @@ function login() {
     res();
   });
 }
-function wait(ms) {
-  return new Promise(res => {
-    let ti = +new Date();
-    while (+new Date() - ti < ms) {}
-    res();
-  });
-}
+
+// yarn add --dev @cypress/webpack-preprocessor ts-loader
+
+// const wp = require('@cypress/webpack-preprocessor')
+
+// module.exports = (on) => {
+//   const options = {
+//     webpackOptions: {
+//       resolve: {
+//         extensions: [".ts", ".tsx", ".js"]
+//       },
+//       module: {
+//         rules: [
+//           {
+//             test: /\.tsx?$/,
+//             loader: "ts-loader",
+//             options: { transpileOnly: true }
+//           }
+//         ]
+//       }
+//     },
+//   }
+//   on('file:preprocessor', wp(options))
+// }

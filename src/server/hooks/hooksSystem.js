@@ -18,7 +18,7 @@ const System = {
 
 const newImages = createChannel("new-images", {
   get: () => System.newImages,
-  set: images => (System.newImages = images)
+  add: (...imgs) => System.newImages.push(...imgs)
 });
 
 const images = createChannel("images", {

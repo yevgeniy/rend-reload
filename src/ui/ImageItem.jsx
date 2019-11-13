@@ -53,8 +53,9 @@ const ImageItem = React.memo(
 const ImageDetails = React.memo(
   ({ id, setSelectedImage, marking, nodeRef }) => {
     const classes = useStyles();
-    const [image, { update: updateImage }] = useOpenStream("image", id);
-    const { thumb, drawing, drawn, marked, reg, large } = image || {};
+    let [image, { update: updateImage }] = useOpenStream("image", id);
+    image = image || {};
+    const { thumb, drawing, drawn, marked, reg, large } = image;
 
     const { src, width, height } = useLoadImageOnScroll(thumb);
 
@@ -76,6 +77,8 @@ const ImageDetails = React.memo(
         ref={nodeRef}
         data-thumb={thumb}
         onClick={onSelect}
+        data-datetime={image.datetime}
+        data-id={image.id}
         style={{ width, height }}
       >
         <div style={{ opacity: drawn ? 0.5 : 1 }}>

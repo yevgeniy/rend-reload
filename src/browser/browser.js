@@ -32,7 +32,6 @@ class Browser {
     if (process.platform === "darwin") {
       let driver = new webdriver.Builder().forBrowser("firefox").build();
       driver = await driver;
-      console.log(driver);
       return driver;
     } else if (process.platform == "linux") {
       var service = new firefox.ServiceBuilder(

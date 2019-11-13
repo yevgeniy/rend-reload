@@ -40,7 +40,7 @@ const SelectedUserPage = props => {
     return () => setCurrentState(null);
   }, []);
 
-  const [imageids, setimageids] = useState([]);
+  let [imageids, setimageids] = useState([]);
   const { watch: imagesWatch, request: imagesRequest } = useMessageStream(
     "images"
   );
@@ -54,13 +54,16 @@ const SelectedUserPage = props => {
 
   const [selectedImage, setSelectedImage] = useState(null);
 
+  imageids &&
+    (imageids = [...imageids].sort((a, b) => (a.id >= b.id ? 1 : -1)));
+
   return (
     <div
       className={clsx(classes.root, {
         [classes.marking]: marking
       })}
     >
-      <UserHeader username={user.username} />
+      <UserHeader username={currentUsername} />
       <StateHeader selectedState={selectedState} />
 
       <div className={classes.images}>
@@ -98,7 +101,7 @@ const UserHeader = React.memo(({ username }) => {
 const StateHeader = React.memo(({ selectedState }) => {
   if (!selectedState) return null;
   return (
-    <AppBar>
+    <AppBar position="static">
       <Toolbar>
         <Typography variant="h6">{selectedState}</Typography>
       </Toolbar>

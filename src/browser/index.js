@@ -30,7 +30,6 @@ class BrowserSystem {
       // , new Browser(await Browser.init())
       // , new Browser(await Browser.init())
     ];
-    console.log(this.browsers[0]);
 
     const res = this.browsers.map(x =>
       x.navigate("http://deviantart.com").start()
@@ -65,7 +64,6 @@ class BrowserSystem {
               }
           });
         `);
-        console.log(res.length);
         if (!res.length) return null;
         return res;
       });
@@ -74,16 +72,17 @@ class BrowserSystem {
       return users;
     });
   }
-  getImagesStream(url, dbimages) {
+  getImagesStream(url, existing) {
     const { readyBrowsers } = this;
 
-    return new MessageStream(async function*() {
-      const browser = await readyBrowsers.read();
+    return new MessageStream(async function(out) {
+      let r = readyBrowsers.read();
+      const browser = await r;
       browser.ready = false;
 
       let newseenimages;
       let seen = [];
-      let ti;
+      let ti = +new Date();
 
       await browser.navigate(url).ready(3000);
 
@@ -96,21 +95,20 @@ class BrowserSystem {
         newseenimages = allimages.nimmunique(seen, "id");
 
         if (newseenimages.length) {
-          yield newimages.map(v => v.id);
+          out(newseenimages);
           ti = +new Date();
         }
+        seen = [...allimages];
 
         /*if we found existing images or timedout*/
         if (
-          allimages.nimmjoin(dbimages, "id").length ||
+          allimages.map(v => v.id).nimmjoin(existing).length ||
           +new Date() - ti > 10000
         ) {
           scrollproc.kill();
-          yield null;
+          out(null);
           break;
         }
-
-        seen = [...seen, ...newseenimages];
 
         await Promise.delay(1000);
       }
@@ -151,8 +149,6 @@ class BrowserSystem {
 
         let s = yield browser.executeScript(`return window.scrollY`);
         if (s === scrollTop) {
-          /*reached bottom*/
-          out("raeched bottom");
           return;
         }
         scrollTop = s;
