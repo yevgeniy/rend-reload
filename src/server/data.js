@@ -18,12 +18,24 @@ module.exports = function({ datetime }) {
 
   return [
     component(loadUsers, { db }),
+    component(dropUser, { db }),
     component(loadStates, { db }),
     component(updateImage, { db }),
-    component(saveNewImages, { db })
-    // component(updateUser, { db })
+    component(saveNewImages, { db }),
+    component(updateUser, { db })
   ];
 };
+
+function dropUser({ db }) {
+  const [users, { on, updateMember }] = useOpenStream("users");
+  on("delete", ([username]) => {
+    let user = users.find(v => v.username === username);
+    if (!user) return;
+    console.log("deleting", username);
+    // db.collection("images").deleteMany({ username });
+    // updateMember(username, { dead: true });
+  });
+}
 
 function updateImage({ db }) {
   const { on } = useMessageStream("image");
@@ -53,17 +65,9 @@ function saveNewImages({ db }) {
 }
 
 function updateUser({ db }) {
-  useUserUpdates(async (username, updates) => {
-    await db
-      .collection("users")
-      .updateOne({ username }, { $set: updates }, err => {
-        if (err) {
-          console.log(err);
-          return;
-        }
-        console.log(`UPDATED USER: ${username}`);
-      });
-    return true;
+  const { on } = useMessageStream("users");
+  on("updateMember", ([username, updates]) => {
+    db.collection("users").updateOne({ username }, { $set: updates });
   });
 }
 

@@ -87,7 +87,7 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
   if (!img) return null;
   return (
     <div className={classes.root}>
-      <div className={classes.background} />
+      <div className={classes.background} onClick={close} />
 
       <div className={classes.imgSetting} ref={settingNodeRef}>
         <img src={img.reg} style={{ opacity: 1 }} ref={imgRef} />

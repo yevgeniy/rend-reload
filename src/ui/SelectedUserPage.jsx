@@ -1,7 +1,16 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import clsx from "clsx";
-import { AppBar, Toolbar, Typography, makeStyles } from "@material-ui/core";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  makeStyles,
+  Button,
+  Dialog,
+  DialogTitle,
+  Divider
+} from "@material-ui/core";
 import { useOpenStream, useMessageStream } from "./hooks";
 import ImageItem from "./ImageItem";
 import FramedImage from "./FramedImage";
@@ -88,14 +97,97 @@ const SelectedUserPage = props => {
     </div>
   );
 };
+function useDropUserConfirm() {
+  const [isShowConfirm, setIsShow] = useState(false);
+  const prom = useRef();
+
+  const dropUserConfirm = () => {
+    return new Promise(res => {
+      prom.current = res;
+      setIsShow(true);
+    });
+  };
+  const doConfirm = () => {
+    prom.current && prom.current();
+    setIsShow(false);
+  };
+  const dontConfirm = () => {
+    prom.current = null;
+    setIsShow(false);
+  };
+
+  return {
+    isShowConfirm,
+    dropUserConfirm,
+    doConfirm,
+    dontConfirm
+  };
+}
+const useHeaderStyles = makeStyles(theme => ({
+  root: {},
+  button: {
+    marginLeft: theme.spacing(2)
+  },
+  controls: {
+    display: "flex",
+    flex: 1,
+    justifyContent: "flex-end"
+  },
+  dialog: {
+    padding: theme.spacing(2)
+  }
+}));
 const UserHeader = React.memo(({ username }) => {
   if (!username) return null;
+  const classes = useHeaderStyles();
+  const { send } = useMessageStream("users");
+  const {
+    isShowConfirm,
+    dropUserConfirm,
+    doConfirm,
+    dontConfirm
+  } = useDropUserConfirm();
+  const doDropUser = () => {
+    dropUserConfirm().then(() => {
+      send("delete", username);
+    });
+  };
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6">{username}</Typography>
-      </Toolbar>
-    </AppBar>
+    <>
+      <AppBar className={classes.root} position="static">
+        <Toolbar>
+          <Typography variant="h6">{username}</Typography>
+
+          <div className={classes.controls}>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={doDropUser}
+            >
+              Drop User
+            </Button>
+          </div>
+        </Toolbar>
+      </AppBar>
+      {isShowConfirm && (
+        <Dialog
+          classes={{ paper: classes.dialog }}
+          open={isShowConfirm}
+          onClose={dontConfirm}
+        >
+          <DialogTitle>Delete User?</DialogTitle>
+
+          <div>
+            <Button variant="outlined" color="primary" onClick={doConfirm}>
+              Confirm
+            </Button>
+            <Button href="#" onClick={dontConfirm}>
+              Cancel
+            </Button>
+          </div>
+        </Dialog>
+      )}
+    </>
   );
 });
 const StateHeader = React.memo(({ selectedState }) => {
