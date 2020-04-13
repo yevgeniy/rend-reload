@@ -4,5 +4,9 @@ const data = require("./data");
 
 const datetime = +new Date();
 module.exports = function() {
-  return [component(data, { datetime }), component(com, { datetime })];
+
+  return [
+    component(data, { datetime }),
+    component(com, { datetime })
+  ];
 };

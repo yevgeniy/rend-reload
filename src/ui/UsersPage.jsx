@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 import { useOpenStream, useMessageStream,useStream } from "./hooks";
 import { Link } from "react-router-dom";
 import { makeStyles, Chip, Avatar, Divider } from "@material-ui/core";
@@ -20,6 +20,10 @@ const useStyles = makeStyles(theme => ({
 const UsersPage = React.memo(() => {
   const [users] = useOpenStream('users');
   let [states] = useOpenStream('states');
+  const {set:setIsClientConnected}=useMessageStream('is-client-connected');
+  useEffect(()=> {
+    setIsClientConnected(true);
+  },[])
   states=states||[];
   
   const classes = useStyles();

@@ -18,7 +18,6 @@ const { workgen } = require("../helpers");
 //             {"id":985585542,"large":"https://img00.deviantart.net/928a/i/2012/048/9/c/no_title_112_by_abrito-d4q137o.jpg","reg":"https://img00.deviantart.net/928a/i/2012/048/9/c/no_title_112_by_abrito-d4q137o.jpg","thumb":"https://t00.deviantart.net/O30urEmaX9fSHWjzQU9WulXXw7U=/fit-in/700x350/filters:fixed_height(100,100):origin()/pre00/b66c/th/pre/i/2012/048/9/c/no_title_112_by_abrito-d4q137o.jpg","username":"ABrito"},
 //             {"id":985585543,"large":"https://img00.deviantart.net/928a/i/2012/048/9/c/no_title_112_by_abrito-d4q137o.jpg","reg":"https://img00.deviantart.net/928a/i/2012/048/9/c/no_title_112_by_abrito-d4q137o.jpg","thumb":"https://t00.deviantart.net/O30urEmaX9fSHWjzQU9WulXXw7U=/fit-in/700x350/filters:fixed_height(100,100):origin()/pre00/b66c/th/pre/i/2012/048/9/c/no_title_112_by_abrito-d4q137o.jpg","username":"ABrito"},
 //         ]
-
 //         return new Promise(res=> {
 //             setTimeout(()=> {
 //                 fn(fake);
@@ -29,6 +28,11 @@ const { workgen } = require("../helpers");
 // }
 
 module.exports = function({ datetime }) {
+
+  const [isClientConnected]=useOpenStream('is-client-connected');
+  if (!isClientConnected)
+    return null;
+
   return [component(setImages), component(stripImagesForUsers, { datetime })];
 };
 
@@ -65,18 +69,19 @@ function setImages_state({ currentState }) {
   const { set } = useMessageStream("images");
 
   useEffect(() => {
-    console.log("a", stateImages && stateImages.length);
     set(stateImages || []);
   }, [currentState, stateImages]);
 }
 function setImages_user({ currentUsername, showOptions }) {
   const userImages = useUserImages(currentUsername);
+  const [user]=useOpenStream.user(currentUsername);
   const { set } = useMessageStream("images");
+  console.log(user);
 
   useEffect(() => {
     console.log("setting images", userImages && userImages.length);
     set(userImages || []);
-  }, [currentUsername, userImages]);
+  }, [currentUsername, userImages, user && user.imgcount]);
 }
 function stripImagesForUsers({ datetime }) {
   if (process.argv.indexOf("--nobrowser") > -1) return;
@@ -94,7 +99,7 @@ function stripImagesForUsers({ datetime }) {
 
     var [userToRun] = [
       ...(currentuser ? [currentuser] : []),
-      ...users
+      ...users.filter(v=>!v.dead)
     ].nimmunique(ran, "username");
 
     if (!userToRun) {

@@ -13,6 +13,16 @@ const {
 } = require("./hooks");
 
 module.exports = function({ datetime }) {
+
+  const [isClientConnected]=useOpenStream('is-client-connected');
+
+  if (!isClientConnected)
+    return null;
+
+  return component(connected);
+};
+
+function connected() {
   const db = useMongoDb();
   if (!db) return;
 
@@ -24,16 +34,15 @@ module.exports = function({ datetime }) {
     component(saveNewImages, { db }),
     component(updateUser, { db })
   ];
-};
+}
 
 function dropUser({ db }) {
   const [users, { on, updateMember }] = useOpenStream("users");
-  on("delete", ([username]) => {
+  on("delete", async ([username]) => {
     let user = users.find(v => v.username === username);
     if (!user) return;
-    console.log("deleting", username);
-    // db.collection("images").deleteMany({ username });
-    // updateMember(username, { dead: true });
+    await db.collection("images").deleteMany({ username });
+    updateMember(username, { dead: true, imgcount:0});
   });
 }
 
@@ -67,6 +76,7 @@ function saveNewImages({ db }) {
 function updateUser({ db }) {
   const { on } = useMessageStream("users");
   on("updateMember", ([username, updates]) => {
+    console.log('updating', username, updates)
     db.collection("users").updateOne({ username }, { $set: updates });
   });
 }
