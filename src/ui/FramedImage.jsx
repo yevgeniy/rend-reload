@@ -56,7 +56,7 @@ const useStyles = makeStyles(theme => {
 });
 
 const FramedImage = React.memo(({ setSelectedImage, id }) => {
-  const [img, { update: updateImage }] = useOpenStream("image", id);
+  const [img, { update: updateImage, send }] = useOpenStream("image", id);
   const classes = useStyles({ ...(img || {}) });
 
   const settingNodeRef = useRef();
@@ -79,6 +79,12 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!img) return;
+
+    if (!img.reg) send("get-reg");
+  });
+
   const close = () => setSelectedImage(null);
   const mark = () => updateImage({ marked: !img.marked });
   const drawn = () => updateImage({ drawn: !img.drawn });
@@ -90,7 +96,7 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
       <div className={classes.background} onClick={close} />
 
       <div className={classes.imgSetting} ref={settingNodeRef}>
-        <img src={img.reg} style={{ opacity: 1 }} ref={imgRef} />
+        <img src={img.reg || img.thumb} style={{ opacity: 1 }} ref={imgRef} />
       </div>
 
       <AppBar className={classes.appbar}>

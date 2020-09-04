@@ -1,5 +1,5 @@
-import React, {useEffect} from "react";
-import { useOpenStream, useMessageStream,useStream } from "./hooks";
+import React, { useEffect } from "react";
+import { useOpenStream, useMessageStream, useStream } from "./hooks";
 import { Link } from "react-router-dom";
 import { makeStyles, Chip, Avatar, Divider } from "@material-ui/core";
 
@@ -18,14 +18,14 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const UsersPage = React.memo(() => {
-  const [users] = useOpenStream('users');
-  let [states] = useOpenStream('states');
-  const {set:setIsClientConnected}=useMessageStream('is-client-connected');
-  useEffect(()=> {
+  const [users] = useOpenStream("users");
+  let [states] = useOpenStream("states");
+  const { set: setIsClientConnected } = useMessageStream("is-client-connected");
+  useEffect(() => {
     setIsClientConnected(true);
-  },[])
-  states=states||[];
-  
+  }, []);
+  states = states || [];
+
   const classes = useStyles();
 
   const handleDelete = () => {};
@@ -54,20 +54,22 @@ const UsersPage = React.memo(() => {
 
       {users.map(user => {
         return (
-          <Chip
-            key={user.username}
-            avatar={
-              <Avatar>
-                {`${user.username[0]}${user.username[1]}`.toUpperCase()}
-              </Avatar>
-            }
-            label={user.username + ` (${user.imgcount})`}
-            clickable
-            className={classes.chip}
-            color="primary"
-            component={Link}
-            to={`/user/${user.username}`}
-          />
+          !user.dead && (
+            <Chip
+              key={user.username}
+              avatar={
+                <Avatar>
+                  {`${user.username[0]}${user.username[1]}`.toUpperCase()}
+                </Avatar>
+              }
+              label={user.username + ` (${user.imgcount})`}
+              clickable
+              className={classes.chip}
+              color="primary"
+              component={Link}
+              to={`/user/${user.username}`}
+            />
+          )
         );
       })}
 

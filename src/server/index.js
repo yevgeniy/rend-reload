@@ -3,6 +3,5 @@ const app = require("./app");
 
 module.exports = function() {
   require("./helpers");
-
   root(component(app));
 };

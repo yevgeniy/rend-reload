@@ -37,6 +37,26 @@ class BrowserSystem {
     await Promise.all(res);
   }
 
+  async getRegImageSrc(url) {
+    const browser = await this.readyBrowsers.read();
+    browser.ready = false;
+
+    await browser.navigate(url).ready(3000);
+
+    const res = await wait(async function() {
+      const r = await browser.executeScript(`
+        return document.querySelector('._1izoQ.vbgSM')
+          ? document.querySelector('._1izoQ.vbgSM').src 
+          : null
+        `);
+      return r;
+    });
+
+    browser.ready = true;
+    this.readyBrowsers.push(browser);
+    return res;
+  }
+
   getUsers() {
     const { readyBrowsers } = this;
 
@@ -72,6 +92,7 @@ class BrowserSystem {
       return users;
     });
   }
+
   getImagesStream(url, existing) {
     const { readyBrowsers } = this;
 
@@ -118,15 +139,16 @@ class BrowserSystem {
 
     async function scrapeImagesOnPage(browser) {
       var res = await browser.executeScript(
-        `return [].slice.call( document.querySelectorAll('#gmi- .thumb')).map(function(v){
+        `return [].slice.call( document.querySelectorAll('._2S8RD.Y-DVc')).map(function(v){
                                   return {
                                       thumb: v.querySelector('img').src,
-                                      reg: v.getAttribute('data-super-img'),
-                                      large: v.getAttribute('data-super-full-img'),
-                                      id: +v.getAttribute('data-deviationid')
+                                      href: v.querySelector('a').href,
+                                      //reg: v.getAttribute('data-super-img'),
+                                      //large: v.getAttribute('data-super-full-img'),
+                                      id: +v.querySelector('a').href.split('-').slice(-1)[0]
                                   }
                       }).filter(v=>{
-                          return v && v.reg && v;
+                          return v && v.thumb && v;
                       })`
       );
       return res;

@@ -13,11 +13,9 @@ const {
 } = require("./hooks");
 
 module.exports = function({ datetime }) {
+  const [isClientConnected] = useOpenStream("is-client-connected");
 
-  const [isClientConnected]=useOpenStream('is-client-connected');
-
-  if (!isClientConnected)
-    return null;
+  if (!isClientConnected) return null;
 
   return component(connected);
 };
@@ -42,7 +40,7 @@ function dropUser({ db }) {
     let user = users.find(v => v.username === username);
     if (!user) return;
     await db.collection("images").deleteMany({ username });
-    updateMember(username, { dead: true, imgcount:0});
+    updateMember(username, { dead: true, imgcount: 0 });
   });
 }
 
@@ -61,7 +59,7 @@ function saveNewImages({ db }) {
     await Promise.all(
       newimages.map(v => {
         console.log("NEW IMG", v);
-        if (v && v.id && v.thumb && v.reg && v.datetime) {
+        if (v && v.id && v.thumb && v.datetime) {
           console.log("SAVING", v.id);
           return db.collection("images").insertOne(v);
         }
@@ -76,7 +74,7 @@ function saveNewImages({ db }) {
 function updateUser({ db }) {
   const { on } = useMessageStream("users");
   on("updateMember", ([username, updates]) => {
-    console.log('updating', username, updates)
+    console.log("updating", username, updates);
     db.collection("users").updateOne({ username }, { $set: updates });
   });
 }

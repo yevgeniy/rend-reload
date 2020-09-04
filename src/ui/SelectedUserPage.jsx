@@ -63,8 +63,9 @@ const SelectedUserPage = props => {
 
   const [selectedImage, setSelectedImage] = useState(null);
 
-  imageids &&
-    (imageids = [...imageids].sort((a, b) => (a.id >= b.id ? 1 : -1)));
+  if (currentUsername !== "__NEW_IMAGES__")
+    imageids &&
+      (imageids = [...imageids].sort((a, b) => (a.id >= b.id ? 1 : -1)));
 
   return (
     <div

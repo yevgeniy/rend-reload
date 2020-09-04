@@ -1,13 +1,15 @@
-const { component, useState, useEffect, useRef } = require("nimm-react");
+const { component, useState, useEffect } = require("nimm-react");
+const FS = require("fs");
 const {
   useOpenStream,
   useMessageStream,
   useMarkedImages,
   useUserImages,
   useStateImages,
-  useImageIds
+  useImageIds,
+  useBrowserSystem
 } = require("./hooks");
-const FS = require("fs");
+const stripRegUrl = require("./stripRegUrl");
 const { workgen } = require("../helpers");
 
 // var browser={
@@ -28,12 +30,14 @@ const { workgen } = require("../helpers");
 // }
 
 module.exports = function({ datetime }) {
+  const [isClientConnected] = useOpenStream("is-client-connected");
+  if (!isClientConnected) return null;
 
-  const [isClientConnected]=useOpenStream('is-client-connected');
-  if (!isClientConnected)
-    return null;
-
-  return [component(setImages), component(stripImagesForUsers, { datetime })];
+  return [
+    component(setImages),
+    component(stripRegUrl),
+    component(stripImagesForUsers, { datetime })
+  ];
 };
 
 function setImages() {
@@ -74,7 +78,7 @@ function setImages_state({ currentState }) {
 }
 function setImages_user({ currentUsername, showOptions }) {
   const userImages = useUserImages(currentUsername);
-  const [user]=useOpenStream.user(currentUsername);
+  const [user] = useOpenStream.user(currentUsername);
   const { set } = useMessageStream("images");
   console.log(user);
 
@@ -99,7 +103,7 @@ function stripImagesForUsers({ datetime }) {
 
     var [userToRun] = [
       ...(currentuser ? [currentuser] : []),
-      ...users.filter(v=>!v.dead)
+      ...users.filter(v => !v.dead)
     ].nimmunique(ran, "username");
 
     if (!userToRun) {
@@ -166,25 +170,3 @@ function getImagesRunner({ setRan, instanceTime, ...user }) {
     });
   }, [imageIds, browsersystem]);
 }
-
-let bp = null;
-useBrowserSystem = function() {
-  let [b, setb] = useState(null);
-
-  useEffect(() => {
-    bp =
-      bp ||
-      (bp = new Promise(res => {
-        var browsersystem = require("../browser");
-
-        workgen(function*() {
-          yield browsersystem.init();
-          yield browsersystem.login();
-
-          res(browsersystem);
-        });
-      }));
-    bp.then(setb);
-  }, []);
-  return b;
-};

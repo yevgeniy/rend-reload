@@ -10,7 +10,7 @@
     "clsx": "^1.0.4",
     "express": "^4.17.1",
     "mongodb": "^3.3.2",
-    "nimm-react": "^1.0.21",
+    "nimm-react": "^1.0.23",
     "nimm-sync": "^2.0.0",
     "nimm-warden": "^1.0.1",
     "react": "16.8.6",
