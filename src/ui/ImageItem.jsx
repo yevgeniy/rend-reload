@@ -23,6 +23,9 @@ const useStyles = makeStyles(
       },
       marked: {
         border: "solid green 5px"
+      },
+      noreg: {
+        border: "solid red 5px"
       }
     };
   },
@@ -71,7 +74,8 @@ const ImageDetails = React.memo(
     return (
       <div
         className={clsx(classes.root, {
-          [classes.marked]: marked,
+          [classes.marked]: marked && reg,
+          [classes.noreg]: marked && !reg,
           [classes.drawing]: drawing
         })}
         ref={nodeRef}

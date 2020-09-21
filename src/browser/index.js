@@ -16,7 +16,8 @@ class BrowserSystem {
   constructor(system) {
     this.system = system;
     this.readyBrowsers = new MessageStream();
-    this.readyBrowsers.onRead(async () => {
+    const c = this.readyBrowsers.onRead(async () => {
+      c();
       await this.init();
       await this.login();
     });
@@ -35,6 +36,46 @@ class BrowserSystem {
       x.navigate("http://deviantart.com").start()
     );
     await Promise.all(res);
+  }
+
+  async stripUsers() {
+    const browser = await this.readyBrowsers.read();
+    browser.ready = false;
+
+    await browser
+      .navigate("https://www.deviantart.com/jadeitedrake0/about#watching")
+      .ready();
+
+    /*open all of the users*/
+    let res;
+    do {
+      res = await browser.executeScript(`
+      var [button] = [...document.querySelectorAll('#watching button')].filter(v=>v.innerHTML==='Load more');
+      if (button) {
+        button.click();
+        return true;
+      }
+
+      return false;
+    `);
+      await Promise.delay(500);
+    } while (res);
+
+    /*get all users*/
+    res = await browser.executeScript(`
+      var res=[...document.querySelectorAll('#watching a.user-link')].map(v=>{
+        return {
+          username: v.querySelector('.F1KyP').innerHTML,
+          url: v.href,
+          datetime:+new Date(),
+          isEmpty:true,
+        }
+      });
+      return res;
+    `);
+
+    browser.ready = true;
+    return res;
   }
 
   async getRegImageSrc(url) {
@@ -57,43 +98,7 @@ class BrowserSystem {
     return res;
   }
 
-  getUsers() {
-    const { readyBrowsers } = this;
-
-    return workgen(function*() {
-      let browser = yield readyBrowsers.read();
-
-      browser.ready = false;
-      yield browser
-        .find("#friendslink")
-        .then(r => r.click())
-        .catch(e => {
-          console.log("FRIEND LINK");
-        });
-
-      var users = yield wait(async () => {
-        console.log("finding users");
-        var res = await browser.executeScript(`
-          var elms = [].slice.call(document.querySelectorAll('.popup2-friends-menu a.username'));
-          return elms
-            .map(function(elm) {
-              return {
-                username:elm.innerHTML,
-                url:elm.getAttribute('href'),
-                datetime:+new Date()
-              }
-          });
-        `);
-        if (!res.length) return null;
-        return res;
-      });
-      browser.ready = true;
-      readyBrowsers.push(browser);
-      return users;
-    });
-  }
-
-  getImagesStream(url, existing) {
+  getImagesStream(url, existing, reachedBottom) {
     const { readyBrowsers } = this;
 
     return new MessageStream(async function(out) {

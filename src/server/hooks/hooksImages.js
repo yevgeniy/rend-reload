@@ -1,5 +1,6 @@
 const { useState, useEffect } = require("nimm-react");
 const { useMongoDb } = require("./hooksDb");
+const { useOpenStream } = require("./hooksSystem");
 
 function useMarkedImages() {
   const db = useMongoDb();
@@ -56,7 +57,18 @@ function useStateImages(currentState) {
 }
 function useUserImages(currentUserName) {
   const db = useMongoDb();
+  const [newImages] = useOpenStream("new-images");
   let [userImages, setUserImages] = useState(null);
+
+  useEffect(() => {
+    if (!userImages) return;
+    setUserImages(userImages => {
+      return [
+        ...userImages.filter(v => v.username === currentUserName),
+        newImages
+      ].nimmdistinct("thumb");
+    });
+  }, [!!userImages, currentUserName, newImages && newImages.length]);
 
   useEffect(() => {
     if (!db) return;
@@ -92,7 +104,7 @@ function useImageIds(username) {
     if (!db) return;
 
     db.collection("images").distinct("id", { username }, (err, ids) =>
-      setIds(ids)
+      setIds(ids || [])
     );
   }, [db, username]);
 

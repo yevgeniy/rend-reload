@@ -30,7 +30,8 @@ function connected() {
     component(loadStates, { db }),
     component(updateImage, { db }),
     component(saveNewImages, { db }),
-    component(updateUser, { db })
+    component(updateUser, { db }),
+    component(saveUser, { db })
   ];
 }
 
@@ -76,6 +77,15 @@ function updateUser({ db }) {
   on("updateMember", ([username, updates]) => {
     console.log("updating", username, updates);
     db.collection("users").updateOne({ username }, { $set: updates });
+  });
+}
+function saveUser({ db }) {
+  const { on } = useMessageStream("users");
+  on("add", newUsers => {
+    newUsers.forEach(v => {
+      console.log("ADDING USER", v);
+      db.collection("users").insertOne(v);
+    });
   });
 }
 

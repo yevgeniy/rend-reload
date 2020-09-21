@@ -63,9 +63,9 @@ const SelectedUserPage = props => {
 
   const [selectedImage, setSelectedImage] = useState(null);
 
+  console.log(imageids);
   if (currentUsername !== "__NEW_IMAGES__")
-    imageids &&
-      (imageids = [...imageids].sort((a, b) => (a.id >= b.id ? 1 : -1)));
+    imageids && (imageids = [...imageids].sort((a, b) => (a >= b ? 1 : -1)));
 
   return (
     <div
@@ -153,6 +153,9 @@ const UserHeader = React.memo(({ username }) => {
       send("delete", username);
     });
   };
+  const doGetImages = () => {
+    send("strip-images", username);
+  };
   return (
     <>
       <AppBar className={classes.root} position="static">
@@ -166,6 +169,13 @@ const UserHeader = React.memo(({ username }) => {
               onClick={doDropUser}
             >
               Drop User
+            </Button>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={doGetImages}
+            >
+              Get Images
             </Button>
           </div>
         </Toolbar>

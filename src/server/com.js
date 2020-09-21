@@ -10,6 +10,8 @@ const {
   useBrowserSystem
 } = require("./hooks");
 const stripRegUrl = require("./stripRegUrl");
+const udpateUsers = require("./updateUsers");
+const stripImagesForUser = require("./stripImagesForUser");
 const { workgen } = require("../helpers");
 
 // var browser={
@@ -36,7 +38,9 @@ module.exports = function({ datetime }) {
   return [
     component(setImages),
     component(stripRegUrl),
-    component(stripImagesForUsers, { datetime })
+    component(stripImagesForUsers, { datetime }),
+    component(udpateUsers),
+    component(stripImagesForUser, { instanceTime: datetime })
   ];
 };
 
@@ -103,7 +107,7 @@ function stripImagesForUsers({ datetime }) {
 
     var [userToRun] = [
       ...(currentuser ? [currentuser] : []),
-      ...users.filter(v => !v.dead)
+      ...users.filter(v => !v.dead && !v.isEmpty)
     ].nimmunique(ran, "username");
 
     if (!userToRun) {

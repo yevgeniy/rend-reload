@@ -1,5 +1,3 @@
-const { workgen } = require("./helpers");
-
 class MessageStream {
   constructor(fn) {
     this._messages = [];
@@ -31,6 +29,8 @@ class MessageStream {
     this.push(...message);
   }
   read() {
+    this._onread.forEach(v => v());
+
     if (this._messages.length > 0) {
       let message = this._messages.shift();
       return new Promise(res => res(message));
