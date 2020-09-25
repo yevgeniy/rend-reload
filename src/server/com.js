@@ -7,7 +7,8 @@ const {
   useUserImages,
   useStateImages,
   useImageIds,
-  useBrowserSystem
+  useBrowserSystem,
+  useReload
 } = require("./hooks");
 const stripRegUrl = require("./stripRegUrl");
 const udpateUsers = require("./updateUsers");
@@ -81,9 +82,10 @@ function setImages_state({ currentState }) {
   }, [currentState, stateImages]);
 }
 function setImages_user({ currentUsername, showOptions }) {
-  const userImages = useUserImages(currentUsername);
   const [user] = useOpenStream.user(currentUsername);
+  const userImages = useUserImages(currentUsername);
   const { set } = useMessageStream("images");
+
   console.log(user);
 
   useEffect(() => {
@@ -91,6 +93,7 @@ function setImages_user({ currentUsername, showOptions }) {
     set(userImages || []);
   }, [currentUsername, userImages, user && user.imgcount]);
 }
+
 function stripImagesForUsers({ datetime }) {
   if (process.argv.indexOf("--nobrowser") > -1) return;
 

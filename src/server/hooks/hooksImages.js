@@ -1,6 +1,15 @@
-const { useState, useEffect } = require("nimm-react");
+const { useState, useEffect, useResetableState } = require("nimm-react");
 const { useMongoDb } = require("./hooksDb");
-const { useOpenStream } = require("./hooksSystem");
+const { useOpenStream, useMessageStream } = require("./hooksSystem");
+const { workgen } = require("../../helpers");
+
+function useReload() {
+  const [t, sett] = useState(+new Date());
+  const { on } = useMessageStream("images");
+  on("reload", () => sett(+new Date()));
+
+  return t;
+}
 
 function useMarkedImages() {
   const db = useMongoDb();
@@ -57,42 +66,50 @@ function useStateImages(currentState) {
 }
 function useUserImages(currentUserName) {
   const db = useMongoDb();
+  const reloadToken = useReload();
+  let [userImages, setUserImages] = useResetableState(null, [
+    currentUserName,
+    reloadToken
+  ]);
   const [newImages] = useOpenStream("new-images");
-  let [userImages, setUserImages] = useState(null);
 
-  useEffect(() => {
-    if (!userImages) return;
-    setUserImages(userImages => {
-      return [
-        ...userImages.filter(v => v.username === currentUserName),
-        newImages
-      ].nimmdistinct("thumb");
-    });
-  }, [!!userImages, currentUserName, newImages && newImages.length]);
-
+  /*first get images from database*/
   useEffect(() => {
     if (!db) return;
-    if (!currentUserName) {
-      setUserImages(null);
-      return;
-    }
+    if (!currentUserName) return;
+    if (!!userImages) return;
 
-    new Promise(res =>
-      db
-        .collection("images")
-        .find({ username: currentUserName })
-        .toArray((err, imgs) => res([err, imgs]))
-    ).then(([err, res]) => {
+    const g = workgen(function*() {
+      const [err, res] = yield new Promise(res =>
+        db
+          .collection("images")
+          .find({ username: currentUserName })
+          .toArray((err, imgs) => res([err, imgs]))
+      );
+
       if (err) {
         console.log(err);
         return;
       }
       setUserImages(res);
     });
+
     return () => {
-      setUserImages = () => {}; /*bork stale updates*/
+      g.kill();
     };
-  }, [db, currentUserName]);
+  }, [userImages, db, currentUserName]);
+
+  /*after images were fetched from the database, add to the images when new images are present*/
+  useEffect(() => {
+    if (!userImages) return;
+
+    setUserImages(userImages => {
+      return [
+        ...userImages,
+        ...(newImages || []).filter(v => v.username === currentUserName)
+      ].nimmdistinct("thumb");
+    });
+  }, [!!userImages, currentUserName, newImages && newImages.length]);
 
   return userImages;
 }
@@ -115,5 +132,6 @@ module.exports = {
   useMarkedImages,
   useStateImages,
   useUserImages,
-  useImageIds
+  useImageIds,
+  useReload
 };

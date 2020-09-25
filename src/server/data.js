@@ -11,6 +11,8 @@ const {
   useMessageStream,
   useStream
 } = require("./hooks");
+const deleteImages = require("./deleteImages");
+const deleteUnmarked = require("./deleteUnmarkedImages");
 
 module.exports = function({ datetime }) {
   const [isClientConnected] = useOpenStream("is-client-connected");
@@ -31,7 +33,9 @@ function connected() {
     component(updateImage, { db }),
     component(saveNewImages, { db }),
     component(updateUser, { db }),
-    component(saveUser, { db })
+    component(saveUser, { db }),
+    component(deleteImages, { db }),
+    component(deleteUnmarked, { db })
   ];
 }
 

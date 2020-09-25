@@ -11,7 +11,13 @@ import {
   DialogTitle,
   Divider
 } from "@material-ui/core";
-import { useOpenStream, useMessageStream } from "./hooks";
+import {
+  useOpenStream,
+  useMessageStream,
+  useModal,
+  useUser,
+  useUsers
+} from "./hooks";
 import ImageItem from "./ImageItem";
 import FramedImage from "./FramedImage";
 
@@ -39,7 +45,7 @@ const SelectedUserPage = props => {
     return () => setCurrentUsername(null);
   }, []);
 
-  const [user] = useOpenStream("user", currentUsername);
+  const [user] = useUser(currentUsername);
 
   const [selectedState, { set: setCurrentState }] = useOpenStream(
     "current-state"
@@ -98,32 +104,7 @@ const SelectedUserPage = props => {
     </div>
   );
 };
-function useDropUserConfirm() {
-  const [isShowConfirm, setIsShow] = useState(false);
-  const prom = useRef();
 
-  const dropUserConfirm = () => {
-    return new Promise(res => {
-      prom.current = res;
-      setIsShow(true);
-    });
-  };
-  const doConfirm = () => {
-    prom.current && prom.current();
-    setIsShow(false);
-  };
-  const dontConfirm = () => {
-    prom.current = null;
-    setIsShow(false);
-  };
-
-  return {
-    isShowConfirm,
-    dropUserConfirm,
-    doConfirm,
-    dontConfirm
-  };
-}
 const useHeaderStyles = makeStyles(theme => ({
   root: {},
   button: {
@@ -136,26 +117,56 @@ const useHeaderStyles = makeStyles(theme => ({
   },
   dialog: {
     padding: theme.spacing(2)
+  },
+  dialogControls: {
+    display: "flex",
+    justifyContent: "center"
   }
 }));
 const UserHeader = React.memo(({ username }) => {
   if (!username) return null;
   const classes = useHeaderStyles();
-  const { send } = useMessageStream("users");
-  const {
-    isShowConfirm,
-    dropUserConfirm,
-    doConfirm,
-    dontConfirm
-  } = useDropUserConfirm();
+  const { send, request } = useMessageStream("users");
+  const { send: send_images, request: request_images } = useMessageStream(
+    "images"
+  );
+  const [
+    isShowConfirmKill,
+    confirmKill,
+    doConfirmKill,
+    dontConfirmKill
+  ] = useModal();
+  const [
+    isShowConfirmDeleteImages,
+    confirmDeleteImages,
+    doConfirmDeleteImages,
+    dontConfirmDeleteImages
+  ] = useModal();
+  const [
+    isShowConfirmDeleteUnmarked,
+    confirmDeleteUnmarked,
+    doConfirmDeleteUnmarked,
+    dontConfirmDeleteUnmarked
+  ] = useModal();
   const doDropUser = () => {
-    dropUserConfirm().then(() => {
+    confirmKill().then(() => {
       send("delete", username);
     });
   };
   const doGetImages = () => {
     send("strip-images", username);
   };
+  const doDeleteImages = async () => {
+    await confirmDeleteImages();
+    await request_images("delete", username);
+    send_images("reload");
+  };
+  const doDeleteUnmarkedImages = async () => {
+    await confirmDeleteUnmarked();
+    await request_images("delete-unmarked", username);
+    send_images("reload");
+  };
+
   return (
     <>
       <AppBar className={classes.root} position="static">
@@ -177,27 +188,74 @@ const UserHeader = React.memo(({ username }) => {
             >
               Get Images
             </Button>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={doDeleteImages}
+            >
+              Delete Images
+            </Button>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={doDeleteUnmarkedImages}
+            >
+              Delete Unmarked Images
+            </Button>
           </div>
         </Toolbar>
       </AppBar>
-      {isShowConfirm && (
-        <Dialog
-          classes={{ paper: classes.dialog }}
-          open={isShowConfirm}
-          onClose={dontConfirm}
-        >
-          <DialogTitle>Delete User?</DialogTitle>
+      <Dialog
+        classes={{ paper: classes.dialog }}
+        open={isShowConfirmKill}
+        onClose={dontConfirmKill}
+      >
+        <DialogTitle>Delete User?</DialogTitle>
 
-          <div>
-            <Button variant="outlined" color="primary" onClick={doConfirm}>
-              Confirm
-            </Button>
-            <Button href="#" onClick={dontConfirm}>
-              Cancel
-            </Button>
-          </div>
-        </Dialog>
-      )}
+        <div className={classes.dialogControls}>
+          <Button variant="outlined" color="primary" onClick={doConfirmKill}>
+            Confirm
+          </Button>
+          <Button onClick={dontConfirmKill}>Cancel</Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        classes={{ paper: classes.dialog }}
+        open={isShowConfirmDeleteImages}
+        onClose={dontConfirmDeleteImages}
+      >
+        <DialogTitle>Delete All Images for User?</DialogTitle>
+
+        <div className={classes.dialogControls}>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={doConfirmDeleteImages}
+          >
+            Confirm
+          </Button>
+          <Button onClick={dontConfirmDeleteImages}>Cancel</Button>
+        </div>
+      </Dialog>
+      <Dialog
+        classes={{ paper: classes.dialog }}
+        open={isShowConfirmDeleteUnmarked}
+        onClose={dontConfirmDeleteUnmarked}
+      >
+        <DialogTitle>Delete Unmakred Images for User?</DialogTitle>
+
+        <div className={classes.dialogControls}>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={doConfirmDeleteUnmarked}
+          >
+            Confirm
+          </Button>
+          <Button onClick={dontConfirmDeleteUnmarked}>Cancel</Button>
+        </div>
+      </Dialog>
     </>
   );
 });

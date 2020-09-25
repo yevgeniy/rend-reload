@@ -5,8 +5,8 @@ const nimreact = require("nimm-react");
 io.listen(3001);
 
 const System = {
-  isClientConnected:false,
-  uses: [],
+  isClientConnected: false,
+  users: [],
   images: [],
   imageids: [],
   showOptions: null,
@@ -16,42 +16,42 @@ const System = {
   currentUsername: null
 };
 
-const isClientConnected={
-  key:'is-client-connected',
-  get:()=>System.isClientConnected,
-  set:v=>(System.isClientConnected=v)
+const isClientConnected = {
+  key: "is-client-connected",
+  get: () => System.isClientConnected,
+  set: v => (System.isClientConnected = v)
 };
 
 const newImages = {
-  key:"new-images",
+  key: "new-images",
   get: () => System.newImages,
   add: (...imgs) => System.newImages.push(...imgs)
-}
+};
 
 const images = {
-  key:"images",
+  key: "images",
   get: () => System.images,
   set: images => (System.images = images),
   getImageIds: () => System.images.map(v => v.id)
-}
+};
 const image = {
-  key:"image",
+  key: "image",
   get: at => System.images.find(v => v.id === at)
-}
+};
 const currentState = {
-  key:"current-state",
+  key: "current-state",
   get: () => System.currentState,
   set: state => (System.currentState = state)
-}
+};
 const currentUsername = {
-  key:"current-username",
+  key: "current-username",
   get: () => System.currentUsername,
   set: name => (System.currentUsername = name)
-}
+};
 const users = {
-  key:"users",
+  key: "users",
   get: () => {
-    return System.users
+    return System.users;
   },
   set: users => (System.users = users),
   updateMember: (username, u) => {
@@ -59,22 +59,22 @@ const users = {
       v.username === username ? { ...v, ...u } : v
     );
   }
-}
+};
 const user = {
-  key:"user",
+  key: "user",
   get: username => System.users.find(v => v.username === username)
-}
+};
 const states = {
-  key:"states",
+  key: "states",
   get: () => System.states,
   set: states => (System.states = states)
-}
+};
 
 const showOptions = {
-  key:"show-options",
+  key: "show-options",
   get: () => System.showOptions,
   set: v => (System.showOptions = v)
-}
+};
 
 const definition = nimmsync.create([
   users,

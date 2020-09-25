@@ -1,9 +1,5 @@
 const { component, useState, useEffect, useCallback } = require("nimm-react");
-const {
-  useOpenStream,
-  useMessageStream,
-  useBrowserSystem
-} = require("./hooks");
+const { useOpenStream } = require("./hooks");
 var browsersystem = require("../browser");
 
 function updateUsers() {

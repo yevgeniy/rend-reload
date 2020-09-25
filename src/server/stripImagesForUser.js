@@ -39,14 +39,10 @@ function stripImages({ username, instanceTime }) {
       []
     );
 
-    console.log("RUNNING", user.username);
     workgen(function*() {
       let imgs;
 
-      while (true) {
-        imgs = yield runner.read();
-        if (imgs === null) break;
-
+      while ((imgs = yield runner.read())) {
         var newimages = imgs.nimmunique(imageIds, (a, b) => a.id === b);
         newimages.forEach(x => {
           x.username = user.username;
@@ -54,7 +50,6 @@ function stripImages({ username, instanceTime }) {
           x.datetime = instanceTime;
         });
 
-        console.log("new", newimages.length);
         imageIds.push(...newimages.map(v => v.id));
 
         updateMember_users(user.username, {
@@ -64,9 +59,7 @@ function stripImages({ username, instanceTime }) {
         addNewImages(...newimages);
       }
     }).then(() => {
-      console.log("done", user.username);
       updateMember_users(user.username, {
-        reachedBottom: true,
         lastUpdated: instanceTime
       });
     });

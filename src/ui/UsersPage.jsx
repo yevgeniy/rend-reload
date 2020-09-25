@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useOpenStream, useMessageStream, useStream } from "./hooks";
+import { useOpenStream, useMessageStream, useUsers } from "./hooks";
 import { Link } from "react-router-dom";
 import { makeStyles, Chip, Avatar, Divider, Button } from "@material-ui/core";
 
@@ -22,7 +22,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const UsersPage = React.memo(() => {
-  const [users, { request: users_request }] = useOpenStream("users");
+  const [users, { request: users_request }] = useUsers();
   let [states] = useOpenStream("states");
   const { set: setIsClientConnected } = useMessageStream("is-client-connected");
   useEffect(() => {

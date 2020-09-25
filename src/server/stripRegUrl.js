@@ -1,36 +1,29 @@
-const { component, useState, useEffect, useCallback } = require("nimm-react");
 const {
-  useOpenStream,
-  useMessageStream,
-  useBrowserSystem
-} = require("./hooks");
+  component,
+  useState,
+  useEffect,
+  useCallback,
+  root
+} = require("nimm-react");
+const { useOpenStream, useMessageStream } = require("./hooks");
+var browsersystem = require("../browser");
 
 function stripRegUrl() {
   const { on } = useMessageStream("image");
-  const [imgs, setimgs] = useState([]);
 
   on("get-reg", request => {
     let imgid = request.at;
-    setimgs(imgs => {
-      return Array.from(new Set([...imgs, imgid]));
-    });
+    const b = root(component(findImage, { imgid, ondone: () => b.shutdown() }));
   });
 
   on("update", request => {
     let [updates] = request;
     let imgid = request.at;
 
+    let b;
     if (updates.marked)
-      setimgs(imgs => {
-        return Array.from(new Set([...imgs, imgid]));
-      });
+      b = root(component(findImage, { imgid, ondone: () => b.shutdown() }));
   });
-
-  const ondone = useCallback(imgid => {
-    setimgs(imgs => imgs.filter(v => v !== imgid));
-  }, []);
-
-  return imgs.map(imgid => component(findImage, { imgid, key: imgid, ondone }));
 }
 
 function findImage({ imgid, ondone }) {
@@ -39,7 +32,7 @@ function findImage({ imgid, ondone }) {
   if (!img) return;
 
   if (!img.href || img.reg) {
-    ondone(imgid);
+    ondone();
     return;
   }
 
@@ -47,16 +40,11 @@ function findImage({ imgid, ondone }) {
 }
 
 function strip({ img, update, ondone }) {
-  const browserSystem = useBrowserSystem();
-  useEffect(() => {
-    if (!browserSystem) return;
-
-    browserSystem.getRegImageSrc(img.href).then(reg => {
-      console.log(reg);
-      update({ reg });
-      ondone(img.id);
-    });
-  }, [browserSystem]);
+  browsersystem.getRegImageSrc(img.href).then(reg => {
+    console.log(reg);
+    update({ reg });
+    ondone();
+  });
 }
 
 module.exports = stripRegUrl;
