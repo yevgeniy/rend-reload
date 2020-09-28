@@ -61,6 +61,7 @@ const SelectedUserPage = props => {
   );
 
   imagesWatch("set", () => {
+    console.log("set");
     imagesRequest("getImageIds").then(setimageids);
   });
 

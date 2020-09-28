@@ -10,41 +10,48 @@ var browsersystem = require("../browser");
 
 function stripRegUrl() {
   const { on } = useMessageStream("image");
+  const [ids, setids] = useState([]);
 
   on("get-reg", request => {
     let imgid = request.at;
-    const b = root(component(findImage, { imgid, ondone: () => b.shutdown() }));
+    console.log("GET REG", imgid);
+    setids(ids => Array.from(new Set([...ids, imgid])));
   });
 
   on("update", request => {
-    let [updates] = request;
+    let [imgUpdate] = request;
     let imgid = request.at;
 
-    let b;
-    if (updates.marked)
-      b = root(component(findImage, { imgid, ondone: () => b.shutdown() }));
+    if (imgUpdate.marked) {
+      console.log("IS MARKED: ", imgid);
+      setids(ids => Array.from(new Set([...ids, imgid])));
+    }
   });
+
+  const ondone = useCallback(id => {
+    console.log("CLEARING: ", id);
+    setids(ids => ids.nimmunique([id]));
+  }, []);
+
+  console.log("ids: ", ids);
+  return ids.map(imgid => component(findImage, { key: imgid, imgid, ondone }));
 }
 
 function findImage({ imgid, ondone }) {
+  console.log("ID: ", imgid);
   const [img, { update }] = useOpenStream("image", imgid);
 
   if (!img) return;
 
-  if (!img.href || img.reg) {
-    ondone();
-    return;
-  }
+  if (!img.href || img.reg) ondone(imgid);
 
-  return component(strip, { img, update, ondone });
-}
-
-function strip({ img, update, ondone }) {
-  browsersystem.getRegImageSrc(img.href).then(reg => {
-    console.log(reg);
-    update({ reg });
-    ondone();
-  });
+  useEffect(() => {
+    browsersystem.getRegImageSrc(img.href).then(reg => {
+      console.log(reg);
+      update({ reg });
+      ondone(imgid);
+    });
+  }, []);
 }
 
 module.exports = stripRegUrl;

@@ -1,8 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { makeStyles, AppBar, Toolbar, Button } from "@material-ui/core";
+import {
+  makeStyles,
+  AppBar,
+  Toolbar,
+  Button,
+  Divider,
+  Chip,
+  TextField
+} from "@material-ui/core";
 import orange from "@material-ui/core/colors/orange";
 import green from "@material-ui/core/colors/green";
 import purple from "@material-ui/core/colors/purple";
+import Autocomplete from "@material-ui/lab/Autocomplete";
+
 import { useOpenStream } from "./hooks";
 import clsx from "clsx";
 
@@ -15,6 +25,10 @@ const useStyles = makeStyles(theme => {
       top: 0,
       left: 0,
       overflow: "auto"
+    },
+    keywords: {
+      padding: theme.spacing(),
+      fontSize: ".8em"
     },
     background: {
       position: "absolute",
@@ -83,7 +97,7 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
     if (!img) return;
 
     if (!img.reg) send("get-reg");
-  });
+  }, [img]);
 
   const close = () => setSelectedImage(null);
   const mark = () => updateImage({ marked: !img.marked });
@@ -138,9 +152,90 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
             Close
           </Button>
         </Toolbar>
+        <Divider />
+        <div className={classes.keywords}>
+          <AutocompleteSection />
+        </div>
       </AppBar>
     </div>
   );
 });
+
+const useAutocompleteStyles = makeStyles(
+  theme => ({
+    root: { padding: 0, width: "100%", color: "white" },
+    inputRoot: { padding: "0 !important" },
+    endAdornment: { display: "none" },
+    input: { color: "white !important" }
+  }),
+  { name: "autocomplete-overrides" }
+);
+const useAutocompleteChipStyles = makeStyles(
+  theme => ({
+    root: {
+      color: "white",
+      borderColor: "white",
+      height: "25px"
+    },
+    deleteIcon: {
+      color: "white",
+      marginRight: "1px !important"
+    }
+  }),
+  { name: "autocomplete-chip-overrides" }
+);
+
+const AutocompleteSection = () => {
+  const ref = useRef({});
+  const autoCompleteClasses = useAutocompleteStyles({});
+  const autoCompleteChipClasses = useAutocompleteChipStyles({});
+  const allKeywords = ["beautiful", "nude", "ladies"];
+  const keywords = ["nude", "ladies"];
+
+  const update = e => {
+    setTimeout(() => {
+      //@ts-ignore
+      let kw = [...ref.current.querySelectorAll(".MuiChip-label")].map(
+        v => v.innerHTML
+      );
+      kw = Array.from(new Set(kw));
+
+      console.log("a", kw);
+    });
+  };
+
+  return (
+    <Autocomplete
+      ref={ref}
+      classes={autoCompleteClasses}
+      multiple
+      id="tags-filled"
+      options={allKeywords.filter(v => !keywords.some(z => z === v))}
+      defaultValue={keywords}
+      onChange={update}
+      freeSolo
+      renderTags={(value, getTagProps) =>
+        value.map((option, index) => (
+          <Chip
+            classes={autoCompleteChipClasses}
+            variant="outlined"
+            label={option}
+            {...getTagProps({ index })}
+          />
+        ))
+      }
+      renderInput={params => {
+        return (
+          <TextField
+            {...params}
+            classes={{ root: { color: "white !important" } }}
+            placeholder="-- ADD KEYWORD --"
+            fullWidth
+          />
+        );
+      }}
+    />
+  );
+};
 
 export default FramedImage;
