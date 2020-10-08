@@ -101,6 +101,29 @@ const UsersPage = React.memo(() => {
             />
           );
         })}
+
+        <Divider className={classes.divider} />
+
+        {users.map(user => {
+          return (
+            user.dead && (
+              <Chip
+                key={user.username}
+                avatar={
+                  <Avatar>
+                    {`${user.username[0]}${user.username[1]}`.toUpperCase()}
+                  </Avatar>
+                }
+                label={user.username + ` (${user.imgcount})`}
+                clickable
+                className={classes.chip}
+                color="default"
+                component={Link}
+                to={`/user/${user.username}`}
+              />
+            )
+          );
+        })}
       </div>
     </div>
   );

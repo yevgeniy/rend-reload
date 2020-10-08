@@ -10,18 +10,21 @@ const { workgen } = require("../helpers");
 
 function stripImagesForUser({ instanceTime }) {
   const { on: users_on } = useMessageStream("users");
-  const [username, setusername] = useState(null);
+  const [usernames, setusernames] = useState([]);
 
   users_on("strip-images", ([r]) => {
     console.log(r);
-    setusername(r);
+    setusernames(usernames => Array.from(new Set([...usernames, r])));
   });
 
-  if (!username) return;
+  const ondone = username =>
+    setusernames(usernames => usernames.nimmunique([username]));
 
-  return component(stripImages, { username, instanceTime });
+  return usernames.map(username =>
+    component(stripImages, { key: username, username, instanceTime, ondone })
+  );
 }
-function stripImages({ username, instanceTime }) {
+function stripImages({ username, instanceTime, ondone }) {
   const [user] = useOpenStream("user", username);
   const { updateMember: updateMember_users } = useMessageStream("users");
   const imageIds = useImageIds(username);
@@ -62,8 +65,9 @@ function stripImages({ username, instanceTime }) {
       updateMember_users(user.username, {
         lastUpdated: instanceTime
       });
+      ondone(username);
     });
-  }, [imageIds, user]);
+  }, [imageIds && imageIds.length, user && user.username]);
 }
 
 module.exports = stripImagesForUser;

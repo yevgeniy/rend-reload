@@ -2,29 +2,36 @@ const { component, useState, useEffect, useCallback } = require("nimm-react");
 const { useMessageStream, useOpenStream, useImageIds } = require("./hooks");
 
 function deleteUnmarkedImages({ db }) {
-  const { on } = useMessageStream("images");
+  const [images, { on: on_images, set: set_images }] = useOpenStream("images");
   const [newimages, { set: set_newImages }] = useOpenStream("new-images");
+  const { updateMember: updateMember_users } = useMessageStream("users");
 
-  on("delete-unmarked", async ([username]) => {
-    console.log("delete unmarked images for ", username);
+  on_images("delete-unmarked", async () => {
+    console.log("delete unmarked images");
 
-    await db
-      .collection("images")
-      .deleteMany({ username, marked: { $ne: true } });
+    const toDelete = images.filter(v => !v.marked);
 
-    if (!newimages) return;
+    const deletingids = (toDelete || []).map(v => v.id);
+    const effectedusers = (toDelete || []).map(v => v.username).nimmdistinct();
 
-    db.collection("images").distinct("id", { username }, (err, ids) =>
-      set_newImages(imgs =>
-        imgs.nimmjoin(ids || [], (a, b) => {
-          if (a.username === username) {
-            return a.id === b;
-          }
+    await db.collection("images").deleteMany({ id: { $in: deletingids } });
 
-          return true;
-        })
-      )
-    );
+    set_images(images.nimmunique(toDelete, "id"));
+    set_newImages(newimages.nimmunique(toDelete, "id"));
+
+    effectedusers.forEach(async username => {
+      const [err, res] = await new Promise(res =>
+        db
+          .collection("images")
+          .find({ username })
+          .toArray((err, imgs) => res([err, imgs || []]))
+      );
+
+      updateMember_users(username, {
+        isEmpty: !res.length,
+        imgcount: res.length
+      });
+    });
 
     return true;
   });

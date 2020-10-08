@@ -2,7 +2,8 @@ import React from "react";
 import { useState, useEffect, useRef } from "react";
 import clsx from "clsx";
 import { makeStyles } from "@material-ui/core";
-import { useOpenStream } from "./hooks";
+import { useOpenStream, useMessageStream } from "./hooks";
+import BrokenImage from "@material-ui/icons/BrokenImage";
 
 const useStyles = makeStyles(
   theme => {
@@ -57,10 +58,11 @@ const ImageDetails = React.memo(
   ({ id, setSelectedImage, marking, nodeRef }) => {
     const classes = useStyles();
     let [image, { update: updateImage }] = useOpenStream("image", id);
-    image = image || {};
-    const { thumb, drawing, drawn, marked, reg, large } = image;
 
-    const { src, width, height } = useLoadImageOnScroll(thumb);
+    image = image || {};
+    const { thumb, drawing, drawn, marked, reg } = image;
+
+    const { src, width, height, error } = useLoadImageOnScroll(thumb);
 
     const onSelect = () => {
       marking ? updateImage({ marked: !marked }) : setSelectedImage(id);
@@ -86,6 +88,7 @@ const ImageDetails = React.memo(
         style={{ width, height }}
       >
         <div style={{ opacity: drawn ? 0.5 : 1 }}>
+          {error === true && <BrokenImage />}
           <img className="tween-all" height="200" src={src || null} />
         </div>
       </div>
@@ -109,6 +112,7 @@ function useLoadImageOnScroll(thumb) {
   const [src, setSrc] = useState(null);
   const [width, setWidth] = useState("200px");
   const [height, setHeight] = useState("200px");
+  const [error, seterror] = useState(null);
 
   const imgRef = useRef();
 
@@ -127,12 +131,18 @@ function useLoadImageOnScroll(thumb) {
     imgRef.current.addEventListener("load", () => {
       setWidth("auto");
       setHeight("auto");
+      seterror(false);
       setSrc(imgRef.current.src);
+      imgRef.current.removeEventListener("error", error);
     });
+    imgRef.current.addEventListener("error", error);
+    function error() {
+      seterror(true);
+    }
     imgRef.current.src = thumb;
   }, [thumb]);
 
-  return { src, width, height };
+  return { src, width, height, error };
 }
 
 export default ImageItem;

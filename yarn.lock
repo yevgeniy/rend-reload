@@ -7259,10 +7259,10 @@ nimm-react@^1.0.21, nimm-react@^1.0.25:
     tsc "^1.20150623.0"
     typescript "3.2.4"
 
-nimm-sync@^2.0.0:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/nimm-sync/-/nimm-sync-2.0.4.tgz#5b0e3cea57da9a2cf02f9a9358eadafefe1af49c"
-  integrity sha512-x0sPXlalL8Fr/xFAE+0K/BmBNp7ZZQiw7OK6FwEcgUPM9P/1PDQ5r3iGRBNtiu9C/2hGop658Hmn3ozRzNy19w==
+nimm-sync@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/nimm-sync/-/nimm-sync-2.0.5.tgz#e8a0f32c4540d247c28c84f9fea8af3968e6ece7"
+  integrity sha512-2BXBzoXfhfAaNlqrSdmOVJIFNryjPgsWsfNBF7eksQRYgTjaPiIDhFSSsmuICwF+Mjn9XfSIOxJVc2e27kHiiQ==
   dependencies:
     jest "^24.9.0"
     nimm-react "^1.0.21"

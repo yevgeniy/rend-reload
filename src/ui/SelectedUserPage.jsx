@@ -9,7 +9,7 @@ import {
   Button,
   Dialog,
   DialogTitle,
-  Divider
+  Drawer
 } from "@material-ui/core";
 import {
   useOpenStream,
@@ -20,6 +20,7 @@ import {
 } from "./hooks";
 import ImageItem from "./ImageItem";
 import FramedImage from "./FramedImage";
+import MarkSelection from "./MarkSelection";
 
 const useStyles = makeStyles(theme => {
   return {
@@ -29,7 +30,8 @@ const useStyles = makeStyles(theme => {
     },
     images: {
       display: "flex",
-      flexWrap: "wrap"
+      flexWrap: "wrap",
+      paddingTop: "70px"
     }
   };
 });
@@ -44,8 +46,11 @@ const SelectedUserPage = props => {
       setCurrentUsername(props.match.params.username);
     return () => setCurrentUsername(null);
   }, []);
-
-  const [user] = useUser(currentUsername);
+  const [
+    isMarkSelectionOpen,
+    openMarkSelection,
+    doneMarkSelection
+  ] = useModal();
 
   const [selectedState, { set: setCurrentState }] = useOpenStream(
     "current-state"
@@ -55,22 +60,13 @@ const SelectedUserPage = props => {
     return () => setCurrentState(null);
   }, []);
 
-  let [imageids, setimageids] = useState([]);
-  const { watch: imagesWatch, request: imagesRequest } = useMessageStream(
-    "images"
-  );
-
-  imagesWatch("set", () => {
-    console.log("set");
-    imagesRequest("getImageIds").then(setimageids);
-  });
+  let imageids = useImageIds();
 
   const { scrollTop, screenHeight } = useScrolling();
-  const marking = useM();
 
   const [selectedImage, setSelectedImage] = useState(null);
+  const marking = useM(!selectedImage);
 
-  console.log(imageids);
   if (currentUsername !== "__NEW_IMAGES__")
     imageids && (imageids = [...imageids].sort((a, b) => (a >= b ? 1 : -1)));
 
@@ -80,8 +76,18 @@ const SelectedUserPage = props => {
         [classes.marking]: marking
       })}
     >
-      <UserHeader username={currentUsername} />
-      <StateHeader selectedState={selectedState} />
+      {!selectedImage && (
+        <>
+          <UserHeader
+            username={currentUsername}
+            openMarkSelection={openMarkSelection}
+          />
+          <StateHeader
+            selectedState={selectedState}
+            openMarkSelection={openMarkSelection}
+          />
+        </>
+      )}
 
       <div className={classes.images}>
         {(imageids || []).map((v, i) => {
@@ -102,6 +108,16 @@ const SelectedUserPage = props => {
       {selectedImage && (
         <FramedImage id={selectedImage} setSelectedImage={setSelectedImage} />
       )}
+      <Drawer
+        open={isMarkSelectionOpen}
+        anchor="right"
+        onClose={doneMarkSelection}
+      >
+        <MarkSelection
+          doneMarkSelection={doneMarkSelection}
+          setSelectedImage={setSelectedImage}
+        />
+      </Drawer>
     </div>
   );
 };
@@ -124,13 +140,15 @@ const useHeaderStyles = makeStyles(theme => ({
     justifyContent: "center"
   }
 }));
-const UserHeader = React.memo(({ username }) => {
+const UserHeader = React.memo(({ username, openMarkSelection }) => {
   if (!username) return null;
   const classes = useHeaderStyles();
   const { send, request } = useMessageStream("users");
   const { send: send_images, request: request_images } = useMessageStream(
     "images"
   );
+  const { on: on_image } = useMessageStream("image");
+
   const [
     isShowConfirmKill,
     confirmKill,
@@ -149,6 +167,7 @@ const UserHeader = React.memo(({ username }) => {
     doConfirmDeleteUnmarked,
     dontConfirmDeleteUnmarked
   ] = useModal();
+
   const doDropUser = () => {
     confirmKill().then(() => {
       send("delete", username);
@@ -159,7 +178,7 @@ const UserHeader = React.memo(({ username }) => {
   };
   const doDeleteImages = async () => {
     await confirmDeleteImages();
-    await request_images("delete", username);
+    await request_images("delete");
     send_images("reload");
   };
   const doDeleteUnmarkedImages = async () => {
@@ -167,12 +186,14 @@ const UserHeader = React.memo(({ username }) => {
     await request_images("delete-unmarked", username);
     send_images("reload");
   };
+  const doDeleteBrockenImages = async () => {};
 
   return (
     <>
-      <AppBar className={classes.root} position="static">
+      <AppBar className={classes.root} position="fixed">
         <Toolbar>
           <Typography variant="h6">{username}</Typography>
+          <Button onClick={openMarkSelection}>open mark</Button>
 
           <div className={classes.controls}>
             <Button
@@ -202,6 +223,13 @@ const UserHeader = React.memo(({ username }) => {
               onClick={doDeleteUnmarkedImages}
             >
               Delete Unmarked Images
+            </Button>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={doDeleteBrockenImages}
+            >
+              Delete Brocken Images
             </Button>
           </div>
         </Toolbar>
@@ -263,7 +291,7 @@ const UserHeader = React.memo(({ username }) => {
 const StateHeader = React.memo(({ selectedState }) => {
   if (!selectedState) return null;
   return (
-    <AppBar position="static">
+    <AppBar position="fixed">
       <Toolbar>
         <Typography variant="h6">{selectedState}</Typography>
       </Toolbar>
@@ -293,19 +321,32 @@ function useScrolling() {
 
   return { scrollTop, screenHeight };
 }
-function useM() {
+function useM(isActive) {
   const [marking, setMarking] = useState(false);
   useEffect(() => {
+    if (!isActive) return;
     var onM = e => {
-      if (e.key == "m") setMarking(!marking);
+      if (e.key == "m") setMarking(marking => !marking);
     };
     document.addEventListener("keyup", onM);
     return () => {
       document.removeEventListener("keyup", onM);
     };
-  });
+  }, [isActive]);
 
   return marking;
+}
+function useImageIds() {
+  const { watch, request } = useMessageStream("images");
+  const [imageids, setimageids] = useState([]);
+
+  useEffect(() => {
+    request("getImageIds").then(v => setimageids(v));
+  }, []);
+
+  watch("set", () => request("getImageIds").then(v => setimageids(v)));
+
+  return imageids;
 }
 
 export default SelectedUserPage;

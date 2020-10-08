@@ -13,6 +13,7 @@ const {
 } = require("./hooks");
 const deleteImages = require("./deleteImages");
 const deleteUnmarked = require("./deleteUnmarkedImages");
+const getImagesByKeyword = require("./getImagesByKeyword");
 
 module.exports = function({ datetime }) {
   const [isClientConnected] = useOpenStream("is-client-connected");
@@ -35,8 +36,30 @@ function connected() {
     component(updateUser, { db }),
     component(saveUser, { db }),
     component(deleteImages, { db }),
-    component(deleteUnmarked, { db })
+    component(deleteUnmarked, { db }),
+    component(getAllKeyWords, { db }),
+    component(getImagesByKeyword, { db }),
+    component(getImage, { db })
   ];
+}
+
+function getImage({ db }) {
+  const { on } = useMessageStream("image");
+
+  on("get-image", async ([id]) => {
+    const img = await db.collection("images").findOne({ id });
+    return img;
+  });
+}
+
+function getAllKeyWords({ db }) {
+  const { set } = useMessageStream("all-key-words");
+
+  useEffect(async () => {
+    db.collection("images").distinct("keywords", {}, (err, keywords) =>
+      set(keywords.filter(v => v))
+    );
+  }, []);
 }
 
 function dropUser({ db }) {
@@ -54,9 +77,12 @@ function updateImage({ db }) {
   on("update", async request => {
     let [updates] = request;
     let id = request.at;
+    return save(id, updates);
+  });
+  async function save(id, updates) {
     await db.collection("images").updateOne({ id }, { $set: updates });
     return true;
-  });
+  }
 }
 function saveNewImages({ db }) {
   const { on } = useMessageStream("new-images");

@@ -13,7 +13,7 @@ import green from "@material-ui/core/colors/green";
 import purple from "@material-ui/core/colors/purple";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 
-import { useOpenStream } from "./hooks";
+import { useOpenStream, useMessageStream } from "./hooks";
 import clsx from "clsx";
 
 const useStyles = makeStyles(theme => {
@@ -43,7 +43,7 @@ const useStyles = makeStyles(theme => {
       textAlign: "center",
       width: "100vw",
       height: "100vh",
-      paddingTop: theme.spacing(10),
+      paddingTop: "130px",
       "& img": {
         display: "inline-block"
       }
@@ -70,7 +70,7 @@ const useStyles = makeStyles(theme => {
 });
 
 const FramedImage = React.memo(({ setSelectedImage, id }) => {
-  const [img, { update: updateImage, send }] = useOpenStream("image", id);
+  const [img, { send, update: updateImage }] = useOpenStream("image", id);
   const classes = useStyles({ ...(img || {}) });
 
   const settingNodeRef = useRef();
@@ -97,7 +97,7 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
     if (!img) return;
 
     if (!img.reg) send("get-reg");
-  }, [img]);
+  }, [img && img.id, img && img.reg]);
 
   const close = () => setSelectedImage(null);
   const mark = () => updateImage({ marked: !img.marked });
@@ -154,7 +154,10 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
         </Toolbar>
         <Divider />
         <div className={classes.keywords}>
-          <AutocompleteSection />
+          <AutocompleteSection
+            updateImage={updateImage}
+            keywords={img.keywords}
+          />
         </div>
       </AppBar>
     </div>
@@ -185,12 +188,13 @@ const useAutocompleteChipStyles = makeStyles(
   { name: "autocomplete-chip-overrides" }
 );
 
-const AutocompleteSection = () => {
+const AutocompleteSection = ({ keywords, updateImage }) => {
   const ref = useRef({});
   const autoCompleteClasses = useAutocompleteStyles({});
   const autoCompleteChipClasses = useAutocompleteChipStyles({});
-  const allKeywords = ["beautiful", "nude", "ladies"];
-  const keywords = ["nude", "ladies"];
+  const [allKeywords, { set: set_allKeyWords }] = useOpenStream(
+    "all-key-words"
+  );
 
   const update = e => {
     setTimeout(() => {
@@ -198,20 +202,26 @@ const AutocompleteSection = () => {
       let kw = [...ref.current.querySelectorAll(".MuiChip-label")].map(
         v => v.innerHTML
       );
-      kw = Array.from(new Set(kw));
+      kw = Array.from(new Set(kw || []));
+      kw = kw.filter(v => v).map(v => v.toLowerCase());
 
-      console.log("a", kw);
+      console.log(kw, allKeywords);
+      updateImage({ keywords: kw || [] });
+      set_allKeyWords(Array.from(new Set([...allKeywords, ...kw])));
     });
   };
 
+  console.log(allKeywords);
   return (
     <Autocomplete
       ref={ref}
       classes={autoCompleteClasses}
       multiple
       id="tags-filled"
-      options={allKeywords.filter(v => !keywords.some(z => z === v))}
-      defaultValue={keywords}
+      options={(allKeywords || [])
+        .filter(v => v)
+        .filter(v => !(keywords || []).some(z => z === v))}
+      defaultValue={keywords || []}
       onChange={update}
       freeSolo
       renderTags={(value, getTagProps) =>

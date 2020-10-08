@@ -4,7 +4,6 @@ const {
   useOpenStream,
   useMessageStream,
   useMarkedImages,
-  useUserImages,
   useStateImages,
   useImageIds,
   useBrowserSystem,
@@ -13,6 +12,7 @@ const {
 const stripRegUrl = require("./stripRegUrl");
 const udpateUsers = require("./updateUsers");
 const stripImagesForUser = require("./stripImagesForUser");
+const setUserImages = require("./setUserImages");
 const { workgen } = require("../helpers");
 
 // var browser={
@@ -41,14 +41,14 @@ module.exports = function({ datetime }) {
     component(stripRegUrl),
     component(stripImagesForUsers, { datetime }),
     component(udpateUsers),
-    component(stripImagesForUser, { instanceTime: datetime })
+    component(stripImagesForUser, { instanceTime: datetime }),
+    component(setUserImages)
   ];
 };
 
 function setImages() {
   const [currentUsername] = useOpenStream("current-username");
   const [currentState] = useOpenStream("current-state");
-  const [showOptions] = useOpenStream("show-options");
 
   console.log(`username:${currentUsername}, state:${currentState}`);
 
@@ -57,8 +57,6 @@ function setImages() {
     return component(setImages_marked);
   else if (currentUsername == null && currentState)
     return component(setImages_state, { currentState });
-  else if (currentUsername != null)
-    return component(setImages_user, { currentUsername, showOptions });
 }
 
 function setImages_new() {
@@ -80,18 +78,6 @@ function setImages_state({ currentState }) {
   useEffect(() => {
     set(stateImages || []);
   }, [currentState, stateImages]);
-}
-function setImages_user({ currentUsername, showOptions }) {
-  const [user] = useOpenStream.user(currentUsername);
-  const userImages = useUserImages(currentUsername);
-  const { set } = useMessageStream("images");
-
-  console.log(user);
-
-  useEffect(() => {
-    console.log("setting images", userImages && userImages.length);
-    set(userImages || []);
-  }, [currentUsername, userImages, user && user.imgcount]);
 }
 
 function stripImagesForUsers({ datetime }) {

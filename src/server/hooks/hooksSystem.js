@@ -8,14 +8,21 @@ const System = {
   isClientConnected: false,
   users: [],
   images: [],
-  imageids: [],
+  keywordimages: [],
+  imageIds: [],
   showOptions: null,
   newImages: [],
   states: [],
   currentState: null,
-  currentUsername: null
+  currentUsername: null,
+  allKeyWords: []
 };
 
+const allKeyWords = {
+  key: "all-key-words",
+  get: () => System.allKeyWords,
+  set: v => (System.allKeyWords = v)
+};
 const isClientConnected = {
   key: "is-client-connected",
   get: () => System.isClientConnected,
@@ -25,18 +32,24 @@ const isClientConnected = {
 const newImages = {
   key: "new-images",
   get: () => System.newImages,
-  add: (...imgs) => System.newImages.push(...imgs)
+  add: (...imgs) => System.newImages.push(...imgs),
+  set: v => (System.newImages = v)
 };
 
 const images = {
   key: "images",
   get: () => System.images,
   set: images => (System.images = images),
-  getImageIds: () => System.images.map(v => v.id)
+  getImageIds: () => (System.images || []).map(v => v.id)
+};
+const keywordimages = {
+  key: "keyword-images",
+  get: () => System.keywordimages,
+  set: v => (System.keywordimages = v)
 };
 const image = {
   key: "image",
-  get: at => System.images.find(v => v.id === at)
+  get: at => [...System.images, ...System.keywordimages].find(v => v.id === at)
 };
 const currentState = {
   key: "current-state",
@@ -86,7 +99,9 @@ const definition = nimmsync.create([
   images,
   image,
   newImages,
-  isClientConnected
+  isClientConnected,
+  allKeyWords,
+  keywordimages
 ]);
 const { useStream, useMessageStream, useOpenStream } = nimmsync.connect(
   definition,
