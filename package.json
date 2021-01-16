@@ -28,9 +28,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "cypress:open": "cypress open",
-    "eject": "react-scripts eject"
+    "testui": "node /usr/local/bin/nimm-test-core --src=./testui/index.js",
+    "test": "jest"
   },
   "browserslist": [
     ">0.2%",

@@ -106,7 +106,7 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
 
   if (!img) return null;
   return (
-    <div className={classes.root}>
+    <div className={clsx(classes.root, "framedimage")}>
       <div className={classes.background} onClick={close} />
 
       <div className={classes.imgSetting} ref={settingNodeRef}>
@@ -116,7 +116,9 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
       <AppBar className={classes.appbar}>
         <Toolbar>
           <Button
-            className={clsx(classes.button, classes.buttonMark)}
+            className={clsx(classes.button, classes.buttonMark, {
+              marked: img.marked
+            })}
             variant="outlined"
             edge="end"
             color="inherit"
@@ -125,7 +127,9 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
             Mark
           </Button>
           <Button
-            className={clsx(classes.button, classes.buttonDrawing)}
+            className={clsx(classes.button, classes.buttonDrawing, {
+              drawing: img.drawing
+            })}
             variant="outlined"
             edge="end"
             color="inherit"
@@ -134,7 +138,9 @@ const FramedImage = React.memo(({ setSelectedImage, id }) => {
             Drawing
           </Button>
           <Button
-            className={clsx(classes.button, classes.buttonDrawn)}
+            className={clsx(classes.button, classes.buttonDrawn, {
+              drawn: img.drawn
+            })}
             variant="outlined"
             edge="end"
             color="inherit"
@@ -211,7 +217,6 @@ const AutocompleteSection = ({ keywords, updateImage }) => {
     });
   };
 
-  console.log(allKeywords);
   return (
     <Autocomplete
       ref={ref}

@@ -34,7 +34,14 @@ const useStyles = makeStyles(
 );
 
 const ImageItem = React.memo(
-  ({ scrollTop, screenHeight, setSelectedImage, marking, id }) => {
+  ({
+    scrollTop,
+    screenHeight,
+    setSelectedImage,
+    marking,
+    id,
+    brockenImages
+  }) => {
     const classes = useStyles();
 
     const nodeRef = useRef();
@@ -42,7 +49,11 @@ const ImageItem = React.memo(
     const isOnScreen = useIsOnScreen({ nodeRef, screenHeight, scrollTop });
 
     if (isOnScreen)
-      return <ImageDetails {...{ id, setSelectedImage, marking, nodeRef }} />;
+      return (
+        <ImageDetails
+          {...{ id, setSelectedImage, marking, nodeRef, brockenImages }}
+        />
+      );
 
     return (
       <div className={clsx(classes.root, classes.frame)} ref={nodeRef}>
@@ -55,7 +66,7 @@ const ImageItem = React.memo(
 );
 
 const ImageDetails = React.memo(
-  ({ id, setSelectedImage, marking, nodeRef }) => {
+  ({ id, setSelectedImage, marking, nodeRef, brockenImages }) => {
     const classes = useStyles();
     let [image, { update: updateImage }] = useOpenStream("image", id);
 
@@ -67,6 +78,12 @@ const ImageDetails = React.memo(
     const onSelect = () => {
       marking ? updateImage({ marked: !marked }) : setSelectedImage(id);
     };
+    useEffect(() => {
+      if (error === true) brockenImages.current[id] = true;
+      return () => {
+        delete brockenImages.current[id];
+      };
+    }, [error, id]);
 
     useEffect(() => {
       if (!src) return;
@@ -89,7 +106,13 @@ const ImageDetails = React.memo(
       >
         <div style={{ opacity: drawn ? 0.5 : 1 }}>
           {error === true && <BrokenImage />}
-          <img className="tween-all" height="200" src={src || null} />
+          <img
+            className={clsx("tween-all", {
+              loaded: !!src
+            })}
+            height="200"
+            src={src || null}
+          />
         </div>
       </div>
     );
@@ -140,6 +163,8 @@ function useLoadImageOnScroll(thumb) {
       seterror(true);
     }
     imgRef.current.src = thumb;
+
+    return () => imgRef.current.removeEventListener("error", error);
   }, [thumb]);
 
   return { src, width, height, error };

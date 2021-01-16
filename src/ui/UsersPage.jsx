@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useOpenStream, useMessageStream, useUsers } from "./hooks";
 import { Link } from "react-router-dom";
 import { makeStyles, Chip, Avatar, Divider, Button } from "@material-ui/core";
+import clsx from "clsx";
 
 const useStyles = makeStyles(theme => ({
   root: {},
@@ -41,12 +42,12 @@ const UsersPage = React.memo(() => {
 
   return (
     <div>
-      <div className={classes.controlls}>
+      <div className={clsx("controlls", classes.controlls)}>
         <Button color="primary" variant="outlined" onClick={updateUsers}>
           update users
         </Button>
       </div>
-      <div className={classes.usersList}>
+      <div className={clsx(classes.usersList, "users")}>
         <Chip
           avatar={<Avatar>{`N`}</Avatar>}
           label="New Images"
@@ -77,7 +78,7 @@ const UsersPage = React.memo(() => {
                 }
                 label={user.username + ` (${user.imgcount})`}
                 clickable
-                className={classes.chip}
+                className={clsx("user", classes.chip)}
                 color="primary"
                 component={Link}
                 to={`/user/${user.username}`}
@@ -88,42 +89,46 @@ const UsersPage = React.memo(() => {
 
         <Divider className={classes.divider} />
 
-        {states.map((state, i) => {
-          return (
-            <Chip
-              key={state}
-              label={i + 1}
-              clickable
-              className={classes.chip}
-              color="default"
-              component={Link}
-              to={`/state/${state}`}
-            />
-          );
-        })}
+        <div className="states">
+          {states.map((state, i) => {
+            return (
+              <Chip
+                key={state}
+                label={i + 1}
+                clickable
+                className={clsx("state", classes.chip)}
+                color="default"
+                component={Link}
+                to={`/state/${state}`}
+              />
+            );
+          })}
+        </div>
 
         <Divider className={classes.divider} />
 
-        {users.map(user => {
-          return (
-            user.dead && (
-              <Chip
-                key={user.username}
-                avatar={
-                  <Avatar>
-                    {`${user.username[0]}${user.username[1]}`.toUpperCase()}
-                  </Avatar>
-                }
-                label={user.username + ` (${user.imgcount})`}
-                clickable
-                className={classes.chip}
-                color="default"
-                component={Link}
-                to={`/user/${user.username}`}
-              />
-            )
-          );
-        })}
+        <div className="dead-users">
+          {users.map(user => {
+            return (
+              user.dead && (
+                <Chip
+                  key={user.username}
+                  avatar={
+                    <Avatar>
+                      {`${user.username[0]}${user.username[1]}`.toUpperCase()}
+                    </Avatar>
+                  }
+                  label={user.username + ` (${user.imgcount})`}
+                  clickable
+                  className={clsx("dead-user", classes.chip)}
+                  color="default"
+                  component={Link}
+                  to={`/user/${user.username}`}
+                />
+              )
+            );
+          })}
+        </div>
       </div>
     </div>
   );

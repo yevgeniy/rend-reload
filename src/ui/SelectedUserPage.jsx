@@ -41,6 +41,7 @@ const SelectedUserPage = props => {
   const [currentUsername, { set: setCurrentUsername }] = useOpenStream(
     "current-username"
   );
+  const brockenImages = useRef({});
   useEffect(() => {
     props.match.params.username &&
       setCurrentUsername(props.match.params.username);
@@ -79,10 +80,12 @@ const SelectedUserPage = props => {
       {!selectedImage && (
         <>
           <UserHeader
+            brockenImages={brockenImages}
             username={currentUsername}
             openMarkSelection={openMarkSelection}
           />
           <StateHeader
+            brockenImages={brockenImages}
             selectedState={selectedState}
             openMarkSelection={openMarkSelection}
           />
@@ -93,6 +96,7 @@ const SelectedUserPage = props => {
         {(imageids || []).map((v, i) => {
           return (
             <ImageItem
+              brockenImages={brockenImages}
               key={i}
               i={i}
               scrollTop={scrollTop}
@@ -140,155 +144,168 @@ const useHeaderStyles = makeStyles(theme => ({
     justifyContent: "center"
   }
 }));
-const UserHeader = React.memo(({ username, openMarkSelection }) => {
-  if (!username) return null;
-  const classes = useHeaderStyles();
-  const { send, request } = useMessageStream("users");
-  const { send: send_images, request: request_images } = useMessageStream(
-    "images"
-  );
-  const { on: on_image } = useMessageStream("image");
+const UserHeader = React.memo(
+  ({ username, openMarkSelection, brockenImages }) => {
+    if (!username) return null;
+    const classes = useHeaderStyles();
+    const { send, request } = useMessageStream("users");
+    const { send: send_images, request: request_images } = useMessageStream(
+      "images"
+    );
+    const { on: on_image } = useMessageStream("image");
 
-  const [
-    isShowConfirmKill,
-    confirmKill,
-    doConfirmKill,
-    dontConfirmKill
-  ] = useModal();
-  const [
-    isShowConfirmDeleteImages,
-    confirmDeleteImages,
-    doConfirmDeleteImages,
-    dontConfirmDeleteImages
-  ] = useModal();
-  const [
-    isShowConfirmDeleteUnmarked,
-    confirmDeleteUnmarked,
-    doConfirmDeleteUnmarked,
-    dontConfirmDeleteUnmarked
-  ] = useModal();
+    const [
+      isShowConfirmKill,
+      confirmKill,
+      doConfirmKill,
+      dontConfirmKill
+    ] = useModal();
+    const [
+      isShowConfirmDeleteImages,
+      confirmDeleteImages,
+      doConfirmDeleteImages,
+      dontConfirmDeleteImages
+    ] = useModal();
+    const [
+      isShowConfirmDeleteUnmarked,
+      confirmDeleteUnmarked,
+      doConfirmDeleteUnmarked,
+      dontConfirmDeleteUnmarked
+    ] = useModal();
 
-  const doDropUser = () => {
-    confirmKill().then(() => {
-      send("delete", username);
-    });
-  };
-  const doGetImages = () => {
-    send("strip-images", username);
-  };
-  const doDeleteImages = async () => {
-    await confirmDeleteImages();
-    await request_images("delete");
-    send_images("reload");
-  };
-  const doDeleteUnmarkedImages = async () => {
-    await confirmDeleteUnmarked();
-    await request_images("delete-unmarked", username);
-    send_images("reload");
-  };
-  const doDeleteBrockenImages = async () => {};
+    const doDropUser = () => {
+      confirmKill().then(() => {
+        send("delete", username);
+      });
+    };
+    const doGetImages = () => {
+      send("strip-images", username);
+    };
+    const doDeleteImages = async () => {
+      await confirmDeleteImages();
+      await request_images("delete");
+      send_images("reload");
+    };
+    const doDeleteUnmarkedImages = async () => {
+      await confirmDeleteUnmarked();
+      await request_images("delete-unmarked", username);
+      send_images("reload");
+    };
+    const doDeleteBrockenImages = async () => {
+      const brocken = Object.keys(brockenImages.current);
+      console.log("a", brocken);
 
-  return (
-    <>
-      <AppBar className={classes.root} position="fixed">
-        <Toolbar>
-          <Typography variant="h6">{username}</Typography>
-          <Button onClick={openMarkSelection}>open mark</Button>
+      await request_images(
+        "delete",
+        Object.keys(brockenImages.current).map(v => +v)
+      );
+      send_images("reload");
+    };
 
-          <div className={classes.controls}>
-            <Button
-              variant="contained"
-              className={classes.button}
-              onClick={doDropUser}
-            >
-              Drop User
+    return (
+      <>
+        <AppBar className={classes.root} position="fixed">
+          <Toolbar>
+            <Typography className="username" variant="h6">
+              {username}
+            </Typography>
+            <Button onClick={openMarkSelection}>open mark</Button>
+
+            <div className={classes.controls}>
+              <Button
+                variant="contained"
+                className={classes.button}
+                onClick={doDropUser}
+              >
+                Drop User
+              </Button>
+              <Button
+                variant="contained"
+                className={classes.button}
+                onClick={doGetImages}
+              >
+                Get Images
+              </Button>
+              <Button
+                variant="contained"
+                className={classes.button}
+                onClick={doDeleteImages}
+              >
+                Delete Images
+              </Button>
+              <Button
+                variant="contained"
+                className={classes.button}
+                onClick={doDeleteUnmarkedImages}
+              >
+                Delete Unmarked Images
+              </Button>
+              <Button
+                variant="contained"
+                className={classes.button}
+                onClick={doDeleteBrockenImages}
+              >
+                Delete Brocken Images
+              </Button>
+            </div>
+          </Toolbar>
+        </AppBar>
+        <Dialog
+          classes={{ paper: classes.dialog }}
+          open={isShowConfirmKill}
+          onClose={dontConfirmKill}
+        >
+          <DialogTitle>Delete User?</DialogTitle>
+
+          <div className={classes.dialogControls}>
+            <Button variant="outlined" color="primary" onClick={doConfirmKill}>
+              Confirm
             </Button>
-            <Button
-              variant="contained"
-              className={classes.button}
-              onClick={doGetImages}
-            >
-              Get Images
-            </Button>
-            <Button
-              variant="contained"
-              className={classes.button}
-              onClick={doDeleteImages}
-            >
-              Delete Images
-            </Button>
-            <Button
-              variant="contained"
-              className={classes.button}
-              onClick={doDeleteUnmarkedImages}
-            >
-              Delete Unmarked Images
-            </Button>
-            <Button
-              variant="contained"
-              className={classes.button}
-              onClick={doDeleteBrockenImages}
-            >
-              Delete Brocken Images
-            </Button>
+            <Button onClick={dontConfirmKill}>Cancel</Button>
           </div>
-        </Toolbar>
-      </AppBar>
-      <Dialog
-        classes={{ paper: classes.dialog }}
-        open={isShowConfirmKill}
-        onClose={dontConfirmKill}
-      >
-        <DialogTitle>Delete User?</DialogTitle>
+        </Dialog>
 
-        <div className={classes.dialogControls}>
-          <Button variant="outlined" color="primary" onClick={doConfirmKill}>
-            Confirm
-          </Button>
-          <Button onClick={dontConfirmKill}>Cancel</Button>
-        </div>
-      </Dialog>
+        <Dialog
+          classes={{ paper: classes.dialog }}
+          open={isShowConfirmDeleteImages}
+          onClose={dontConfirmDeleteImages}
+        >
+          <DialogTitle>Delete All Images for User?</DialogTitle>
 
-      <Dialog
-        classes={{ paper: classes.dialog }}
-        open={isShowConfirmDeleteImages}
-        onClose={dontConfirmDeleteImages}
-      >
-        <DialogTitle>Delete All Images for User?</DialogTitle>
+          <div className={classes.dialogControls}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={doConfirmDeleteImages}
+            >
+              Confirm
+            </Button>
+            <Button onClick={dontConfirmDeleteImages}>Cancel</Button>
+          </div>
+        </Dialog>
+        <Dialog
+          classes={{ paper: classes.dialog }}
+          open={isShowConfirmDeleteUnmarked}
+          onClose={dontConfirmDeleteUnmarked}
+        >
+          <DialogTitle>Delete Unmakred Images for User?</DialogTitle>
 
-        <div className={classes.dialogControls}>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={doConfirmDeleteImages}
-          >
-            Confirm
-          </Button>
-          <Button onClick={dontConfirmDeleteImages}>Cancel</Button>
-        </div>
-      </Dialog>
-      <Dialog
-        classes={{ paper: classes.dialog }}
-        open={isShowConfirmDeleteUnmarked}
-        onClose={dontConfirmDeleteUnmarked}
-      >
-        <DialogTitle>Delete Unmakred Images for User?</DialogTitle>
-
-        <div className={classes.dialogControls}>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={doConfirmDeleteUnmarked}
-          >
-            Confirm
-          </Button>
-          <Button onClick={dontConfirmDeleteUnmarked}>Cancel</Button>
-        </div>
-      </Dialog>
-    </>
-  );
-});
-const StateHeader = React.memo(({ selectedState }) => {
+          <div className={classes.dialogControls}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={doConfirmDeleteUnmarked}
+            >
+              Confirm
+            </Button>
+            <Button onClick={dontConfirmDeleteUnmarked}>Cancel</Button>
+          </div>
+        </Dialog>
+      </>
+    );
+  }
+);
+const StateHeader = React.memo(({ selectedState, brockenImages }) => {
   if (!selectedState) return null;
   return (
     <AppBar position="fixed">

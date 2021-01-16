@@ -133,7 +133,6 @@ class Browser {
   async find(selector) {
     var driver = await this.builder;
     var res = await driver.findElements(By.css(selector)).catch(e => {
-      console.log("BROWSER FIND");
       throw e;
     });
     if (!res.length) return null;
@@ -163,6 +162,10 @@ class Browser {
         }
       })();
     });
+  }
+
+  async quit() {
+    this.builder.quit();
   }
 }
 class Element {

@@ -96,7 +96,7 @@ function stripImagesForUsers({ datetime }) {
 
     var [userToRun] = [
       ...(currentuser ? [currentuser] : []),
-      ...users.filter(v => !v.dead && !v.isEmpty)
+      ...users.filter(v => !v.dead)
     ].nimmunique(ran, "username");
 
     if (!userToRun) {

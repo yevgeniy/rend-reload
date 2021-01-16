@@ -27,8 +27,8 @@ class BrowserSystem {
 
   async init() {
     this.browsers = [
-      new Browser(await Browser.init()),
       new Browser(await Browser.init())
+      //new Browser(await Browser.init())
       // , new Browser(await Browser.init())
     ];
 
