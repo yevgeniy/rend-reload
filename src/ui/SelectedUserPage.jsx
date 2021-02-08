@@ -305,16 +305,19 @@ const UserHeader = React.memo(
     );
   }
 );
-const StateHeader = React.memo(({ selectedState, brockenImages }) => {
-  if (!selectedState) return null;
-  return (
-    <AppBar position="fixed">
-      <Toolbar>
-        <Typography variant="h6">{selectedState}</Typography>
-      </Toolbar>
-    </AppBar>
-  );
-});
+const StateHeader = React.memo(
+  ({ selectedState, openMarkSelection, brockenImages }) => {
+    if (!selectedState) return null;
+    return (
+      <AppBar position="fixed">
+        <Toolbar>
+          <Typography variant="h6">{selectedState}</Typography>
+          <Button onClick={openMarkSelection}>open mark</Button>
+        </Toolbar>
+      </AppBar>
+    );
+  }
+);
 
 function useScrolling() {
   const [scrollTop, setScrollTop] = useState(0);

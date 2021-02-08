@@ -1,12 +1,4 @@
-const {
-  describe,
-  it,
-  before,
-  after,
-  wait,
-  waitFor,
-  doWaitFor
-} = require("nimm-test-core");
+const { expect, wait, waitFor, doWaitFor } = require("nimm-test-core");
 
 module.exports = function(system) {
   let browser;
@@ -27,17 +19,17 @@ module.exports = function(system) {
     after(async () => {
       await browser.back();
     });
-    it("shows user name", e => {
-      e(() =>
+    it("shows user name", async () => {
+      expect(() =>
         browser
           .find(".username")
           .then(v => v.text())
           .then(v => v === "LollipopJelly")
       );
     });
-    it("clicking on image selects images", async e => {
+    it("clicking on image selects images", async () => {
       await browser.findAll(".loaded").then(v => v[0].click());
-      await e(() => browser.find(".framedimage"));
+      await expect(() => browser.find(".framedimage"));
 
       /*close*/
       await wait(() => browser.find("button", /close/i).then(v => v.click()));
