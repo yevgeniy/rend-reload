@@ -131,6 +131,7 @@ class Browser {
   }
 
   async find(selector) {
+    console.log("find: ", selector);
     var driver = await this.builder;
     var res = await driver.findElements(By.css(selector)).catch(e => {
       throw e;
@@ -139,6 +140,7 @@ class Browser {
     return new Element(res[0]);
   }
   async findAll(selector) {
+    console.log("find all: ", selector);
     var driver = await this.builder;
     var res = await driver.findElements(By.css(selector));
     return res.map(x => new Element(x));

@@ -364,6 +364,8 @@ function useImageIds() {
     request("getImageIds").then(v => setimageids(v));
   }, []);
 
+  /*watch does not carry data.  Once images are set, we want only the ids 
+  since a socket should not need to transfere a potentially large images load*/
   watch("set", () => request("getImageIds").then(v => setimageids(v)));
 
   return imageids;

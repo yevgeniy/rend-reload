@@ -12,6 +12,7 @@ const {
 const stripRegUrl = require("./stripRegUrl");
 const udpateUsers = require("./updateUsers");
 const stripImagesForUser = require("./stripImagesForUser");
+const stripImagesForAllUsers = require("./stripImagesForAllUsers");
 const setUserImages = require("./setUserImages");
 const { workgen } = require("../helpers");
 
@@ -39,9 +40,9 @@ module.exports = function({ datetime }) {
   return [
     component(setImages),
     component(stripRegUrl),
-    component(stripImagesForUsers, { datetime }),
     component(udpateUsers),
     component(stripImagesForUser, { instanceTime: datetime }),
+    component(stripImagesForAllUsers, { instanceTime: datetime }),
     component(setUserImages)
   ];
 };
@@ -78,88 +79,4 @@ function setImages_state({ currentState }) {
   useEffect(() => {
     set(stateImages || []);
   }, [currentState, stateImages]);
-}
-
-function stripImagesForUsers({ datetime }) {
-  if (process.argv.indexOf("--nobrowser") > -1) return;
-
-  const [ran, setRan] = useState([]);
-  const [running, setRunning] = useState(null);
-  const [currentUsername] = useOpenStream("current-username");
-  const [users] = useOpenStream("users");
-
-  useEffect(() => {
-    if (!users) return;
-
-    if (currentUsername)
-      var currentuser = users.find(x => x.username == currentUsername);
-
-    var [userToRun] = [
-      ...(currentuser ? [currentuser] : []),
-      ...users.filter(v => !v.dead)
-    ].nimmunique(ran, "username");
-
-    if (!userToRun) {
-      console.log("ALL USERS RAN");
-      //printout(out.current);
-    }
-
-    setRunning(userToRun);
-  }, [users, currentUsername, ran]);
-
-  if (!running) return;
-
-  return component(getImagesRunner, {
-    setRan,
-    instanceTime: datetime,
-    ...running
-  });
-}
-var c = 0;
-function getImagesRunner({ setRan, instanceTime, ...user }) {
-  const imageIds = useImageIds(user.username);
-  const browsersystem = useBrowserSystem();
-  //const { update: updateUser } = useMessageStream("user");
-  const { add: addNewImages } = useMessageStream("new-images");
-
-  useEffect(() => {
-    if (!imageIds) return;
-    if (!browsersystem) return;
-
-    const runner = browsersystem.getImagesStream(
-      user.url.replace(/\/$/, "") + "/gallery/?catpath=/",
-      imageIds
-    );
-
-    console.log("RUNNING", user.username);
-    workgen(function*() {
-      let imgs;
-
-      while (true) {
-        imgs = yield runner.read();
-        if (imgs === null) break;
-
-        var newimages = imgs.nimmunique(imageIds, (a, b) => a.id === b);
-        newimages.forEach(x => {
-          x.username = user.username;
-          x.seen = false;
-          x.datetime = instanceTime;
-        });
-
-        console.log("new", newimages.length);
-        imageIds.push(...newimages.map(v => v.id));
-
-        // updateUser(user.username, { imgcount: userimages.length });
-        addNewImages(...newimages);
-      }
-      console.log("done", user.username);
-    }).then(() => {
-      // updateUser(user.username, {
-      //   reachedBottom: true,
-      //   lastUpdated: timeIndex
-      // });
-      console.log("setting ran");
-      setRan(ran => [...ran, user]);
-    });
-  }, [imageIds, browsersystem]);
 }

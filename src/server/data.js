@@ -89,9 +89,9 @@ function saveNewImages({ db }) {
   on("add", async newimages => {
     await Promise.all(
       newimages.map(v => {
-        console.log("NEW IMG", v);
         if (v && v.id && v.thumb && v.datetime) {
-          console.log("SAVING", v.id);
+          console.log("SAVING", v);
+
           return db.collection("images").insertOne(v);
         }
 

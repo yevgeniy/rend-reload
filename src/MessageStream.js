@@ -1,15 +1,41 @@
+const { workgen } = require("./helpers");
+
 class MessageStream {
   constructor(fn) {
     this._messages = [];
     this._requests = [];
     this._onread = [];
+    this.kill = function() {};
+    this.onkillfns = [];
 
     fn && this.workgen(fn);
   }
   async workgen(fn) {
-    fn(data => {
-      this.push(data);
-    });
+    if (
+      fn.constructor.name === "GeneratorFunction" ||
+      fn.constructor.name === "AsyncGeneratorFunction"
+    ) {
+      const w = workgen(
+        fn(
+          data => {
+            this.push(data);
+          },
+          fn => this.onkillfns.push(fn)
+        )
+      );
+
+      this.kill = () => {
+        this.onkillfns.forEach(v => v());
+        w.kill();
+      };
+    } else {
+      fn(
+        data => {
+          this.push(data);
+        },
+        fn => this.onkillfns.push(fn)
+      );
+    }
   }
   push(...message) {
     let m;

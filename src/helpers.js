@@ -1,32 +1,36 @@
-let c=0;
+let c = 0;
 function workgen(gen) {
-  let name=++c;
+  let name = ++c;
 
-  let active=true;
-  let childgen=[];
+  let active = true;
+  let childgen = [];
 
-  const mainPromise=new Promise(async (mainPromiseResolve)=> {
-    if (gen.constructor.name === "GeneratorFunction") gen = gen();
+  const mainPromise = new Promise(async mainPromiseResolve => {
+    if (
+      gen.constructor.name === "GeneratorFunction" ||
+      gen.constructor.name === "AsyncGeneratorFunction"
+    )
+      gen = gen();
 
-    let www=workgen._attacher;
-    workgen._attacher=p=>childgen.push(p);
+    let www = workgen._attacher;
+    workgen._attacher = p => childgen.push(p);
     let step = gen.next();
-    workgen._attacher=www;
-  
+    if (step.then) step = await step;
+    workgen._attacher = www;
+
     let res;
-  
-    while (!step.done) { 
+
+    while (!step.done) {
       if (step.value && step.value.then) {
         /*promise*/
         res = await step.value;
       } else if (step.value && step.value.next) {
-        /*generator*/   
-      
-        let www=workgen._attacher;
-        workgen._attacher=p=>childgen.push(p);
-        res = await workgen(step.value);
-        workgen._attacher=www;
+        /*generator*/
 
+        let www = workgen._attacher;
+        workgen._attacher = p => childgen.push(p);
+        res = await workgen(step.value);
+        workgen._attacher = www;
       } else {
         res = step.value;
       }
@@ -35,26 +39,26 @@ function workgen(gen) {
         mainPromiseResolve(undefined);
         break;
       }
-        
-      let www=workgen._attacher;
-      workgen._attacher=p=>childgen.push(p);
+
+      let www = workgen._attacher;
+      workgen._attacher = p => childgen.push(p);
       step = gen.next(res);
-      workgen._attacher=www;
+      if (step.then) step = await step;
+      workgen._attacher = www;
     }
 
     mainPromiseResolve(step.value);
-    
-  })
+  });
   workgen._attacher(mainPromise);
 
-  mainPromise.kill=()=> {
-    active=false;
-    childgen.forEach(v=>v.kill());
-  }  
+  mainPromise.kill = () => {
+    active = false;
+    childgen.forEach(v => v.kill());
+  };
 
   return mainPromise;
 }
-workgen._attacher=()=>{};
+workgen._attacher = () => {};
 
 function clone(obj) {
   if (!obj) return obj;

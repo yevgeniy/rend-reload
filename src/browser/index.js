@@ -98,6 +98,7 @@ class BrowserSystem {
     return res;
   }
 
+  /*user.url.replace(/\/$/, "") + "/gallery/?catpath=/",*/
   getImagesStream(url, existing, reachedBottom) {
     const { readyBrowsers } = this;
 
@@ -178,6 +179,85 @@ class BrowserSystem {
         if (s === scrollTop) {
           return;
         }
+        scrollTop = s;
+      }
+    }
+  }
+
+  getWatchStream() {
+    const { readyBrowsers } = this;
+
+    const seen = [];
+
+    return new MessageStream(function*(out, onkill) {
+      const browser = yield readyBrowsers.read();
+      browser.ready = false;
+
+      onkill(() => {
+        browser.ready = true;
+        readyBrowsers.push(browser);
+      });
+
+      let seen = [];
+
+      console.log("a");
+      yield browser
+        .navigate("https://www.deviantart.com/notifications/watch")
+        .ready(3000);
+
+      console.log("b");
+      yield waitForInitialLoad(browser);
+
+      console.log("ALL GOOD");
+
+      workgen(startScrollDown(browser));
+
+      while (true) {
+        const [allimages, lastDate] = yield scrapeImagesOnPage(browser);
+        const newimags = allimages.nimmunique(seen, "id");
+        out([newimags, lastDate]);
+        seen = allimages;
+
+        yield Promise.delay(1000);
+      }
+    });
+
+    async function waitForInitialLoad(browser) {
+      await wait(() => browser.findAll("._2pjab").then(v => v[0]));
+
+      return Promise.delay(2000);
+    }
+    async function scrapeImagesOnPage(browser) {
+      var res = await browser.executeScript(
+        `var imgs= [...document.querySelectorAll('._2pjab')].filter(v=>!v.innerHTML.match(/unlock for/i)).map(v=>{
+            return {
+                thumb: v.querySelector('img').src,
+                href: v.querySelector('a').href,
+                id: +v.querySelector('a').href.split('-').slice(-1)[0],
+                username:v.querySelector('._1HHLq').innerText,
+                imgdate:v.querySelector('time').innerText
+
+            }
+          }).filter(v=>{
+              return v && v.thumb && v;
+          });
+
+        return [imgs.map( ({imgdate, ...img})=>img ), imgs.slice(-1)[0].imgdate ]
+        `
+      );
+      return res;
+    }
+    function* startScrollDown(browser) {
+      let scrollTop = yield browser.executeScript(`return window.scrollY`);
+      let ti = +new Date();
+      while (true) {
+        yield browser.find("body").then(x => x && x.sendKeys(Key.PAGE_DOWN));
+        yield Promise.delay(1500);
+
+        let s = yield browser.executeScript(`return window.scrollY`);
+        if (s === scrollTop) {
+          if (+new Date() - ti > 10000) return;
+        } else ti = +new Date();
         scrollTop = s;
       }
     }

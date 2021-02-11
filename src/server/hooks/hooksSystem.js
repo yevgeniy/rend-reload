@@ -12,7 +12,7 @@ const System = {
   imageIds: [],
   showOptions: null,
   newImages: [],
-  states: [],
+  states: null,
   currentState: null,
   currentUsername: null,
   allKeyWords: []
